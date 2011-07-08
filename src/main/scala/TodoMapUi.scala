@@ -6,10 +6,13 @@ import com.google.android.maps.GeoPoint
 
 import org.positronicnet.maps.PositronicItemizedOverlay
 import org.positronicnet.ui.PositronicActivityHelpers
-import android.os.Bundle
-import android.graphics.drawable.Drawable;
 
-class MyOverlay( d: Drawable )
+import android.os.Bundle
+import android.graphics.drawable.Drawable
+import android.app.AlertDialog
+import android.content.Context
+
+class MyOverlay( ctx: Context, d: Drawable )
  extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   private val items = Array( 
@@ -19,8 +22,16 @@ class MyOverlay( d: Drawable )
                      "Sekai, konichiwa!", "I'm in Japan!")
   )
 
-  override def size = items.size
-  override def createItem( i: Int ):OverlayItem = items( i )
+  def size = items.size
+  def createItem( i: Int ):OverlayItem = items( i )
+
+  override def onTap( i: Int ): Boolean = {
+    val dialog = new AlertDialog.Builder( ctx )
+    dialog.setTitle( items(i).getTitle )
+    dialog.setMessage( items(i).getSnippet )
+    dialog.show
+    return true;
+  }
 
   this.populate()
 }
@@ -34,9 +45,8 @@ class TodoMapActivity
     setContentView( R.layout.map ) 
     val icon = getResources.getDrawable( android.R.drawable.btn_star_big_on )
 
+    findView( TR.mapview ).getOverlays.add( new MyOverlay( this, icon ))
     findView( TR.mapview ).setBuiltInZoomControls( true )
-    findView( TR.mapview ).getOverlays.add( new MyOverlay( icon ))
-    ()
   }
 
   def isRouteDisplayed = false
