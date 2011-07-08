@@ -1,4 +1,4 @@
-package org.positronicnet.sample.todo
+package org.positronicnet.demo.shopping
 
 import android.util.Log
 import android.content.Intent

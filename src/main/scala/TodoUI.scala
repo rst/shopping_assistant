@@ -1,4 +1,4 @@
-package org.positronicnet.sample.todo
+package org.positronicnet.demo.shopping
 
 import org.positronicnet.ui.IndexedSeqAdapter
 import org.positronicnet.ui.PositronicDialog
