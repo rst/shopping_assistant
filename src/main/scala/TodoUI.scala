@@ -65,6 +65,9 @@ class TodosActivity
     findView( TR.newListName ).onKey( KeyEvent.KEYCODE_ENTER ){ doAdd }
 
     onOptionsItemSelected( R.id.undelete ) { doUndelete }
+    onOptionsItemSelected( R.id.maps ) {
+      startActivity( new Intent( this, classOf[ TodoMapActivity ] ))
+    }
 
     registerForContextMenu( listsView )
 
