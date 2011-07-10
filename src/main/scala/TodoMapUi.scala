@@ -51,20 +51,25 @@ class TodoMapActivity
 {
   onCreate { 
     setContentView( R.layout.map ) 
+
     val icon = getResources.getDrawable( android.R.drawable.btn_star_big_on )
+    val listChooser = findView( TR.list_chooser )
 
     findView( TR.mapview ).getOverlays.add( new NoteTapOverlay( this ))
     findView( TR.mapview ).getOverlays.add( new DummyItemOverlay( this, icon ))
     findView( TR.mapview ).setBuiltInZoomControls( true )
+
+    listChooser.setAdapter( new TodosAdapter( this ))
+    listChooser.onItemSelected{ (view, posn, id) =>
+      val item = listChooser.getAdapter.getItem( posn )
+      toastShort( "selected " + item.asInstanceOf[ TodoList ].name ) 
+    }
   }
 
   def isRouteDisplayed = false
 
   def unclaimedTap( pt: GeoPoint ): Boolean = {
-    
-    Log.d( "XXX", "Got tap at " + pt.toString )
-
-    Toast.makeText( this, "Tap at " + pt.toString, Toast.LENGTH_SHORT ).show
+    toastShort( "Tap at " + pt.toString )
     return true
   }
 }

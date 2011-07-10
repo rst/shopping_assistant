@@ -3,6 +3,7 @@ package org.positronicnet.demo.shopping
 import org.positronicnet.ui.IndexedSeqAdapter
 import org.positronicnet.ui.PositronicDialog
 import org.positronicnet.ui.PositronicActivity
+import org.positronicnet.ui.PositronicActivityHelpers
 import org.positronicnet.ui.CursorSourceAdapter
 
 import org.positronicnet.util.ChangeNotifications
@@ -19,6 +20,7 @@ import android.view.View
 import android.view.ContextMenu
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.SpinnerAdapter
 import android.graphics.Paint
 import android.graphics.Canvas
 
@@ -27,12 +29,16 @@ import android.graphics.Canvas
 // Registers with the "source" (our TodoLists singleton) to be
 // notified whenever its underlying data set is changed (or reloaded),
 // so long as the activity is running.
+//
+// (MapActivities want to use this as well, so the constructor takes
+// any activity with our ActivityHelpers trait.)
 
-class TodosAdapter( activity: PositronicActivity )
+class TodosAdapter( activity: PositronicActivityHelpers )
  extends CursorSourceAdapter( activity, 
                               source = TodoLists.lists,
                               converter = TodoList.fromCursor(_),
                               itemViewResourceId = R.layout.todos_row )
+ with SpinnerAdapter
 {
   def bindItem( view: View, list: TodoList ) =
     view.asInstanceOf[ TextView ].setText( list.name )

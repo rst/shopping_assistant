@@ -3,10 +3,20 @@
   android:orientation="vertical"
   android:layout_width="fill_parent"
   android:layout_height="fill_parent">
-  <TextView
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:text="Dummy Map Label"/>
+    android:layout_height="wrap_content">
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Editing:"/>
+    <org.positronicnet.ui.PositronicSpinner
+      android:id="@+id/list_chooser"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"/>
+  </LinearLayout>
   <com.google.android.maps.MapView
     android:id="@+id/mapview"
     android:layout_width="fill_parent"
