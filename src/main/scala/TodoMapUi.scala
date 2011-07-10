@@ -1,6 +1,8 @@
 package org.positronicnet.demo.shopping
 
 import com.google.android.maps.MapActivity
+import com.google.android.maps.MapView
+import com.google.android.maps.Overlay
 import com.google.android.maps.OverlayItem
 import com.google.android.maps.GeoPoint
 
@@ -11,8 +13,10 @@ import android.os.Bundle
 import android.graphics.drawable.Drawable
 import android.app.AlertDialog
 import android.content.Context
+import android.widget.Toast
+import android.util.Log
 
-class MyOverlay( ctx: Context, d: Drawable )
+class DummyItemOverlay( ctx: Context, d: Drawable )
  extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   private val items = Array( 
@@ -36,7 +40,11 @@ class MyOverlay( ctx: Context, d: Drawable )
   this.populate()
 }
 
-
+class NoteTapOverlay( activity: TodoMapActivity )
+  extends Overlay
+{
+  override def onTap( pt: GeoPoint, mv: MapView ) = activity.unclaimedTap( pt )
+}
 
 class TodoMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
@@ -45,9 +53,18 @@ class TodoMapActivity
     setContentView( R.layout.map ) 
     val icon = getResources.getDrawable( android.R.drawable.btn_star_big_on )
 
-    findView( TR.mapview ).getOverlays.add( new MyOverlay( this, icon ))
+    findView( TR.mapview ).getOverlays.add( new NoteTapOverlay( this ))
+    findView( TR.mapview ).getOverlays.add( new DummyItemOverlay( this, icon ))
     findView( TR.mapview ).setBuiltInZoomControls( true )
   }
 
   def isRouteDisplayed = false
+
+  def unclaimedTap( pt: GeoPoint ): Boolean = {
+    
+    Log.d( "XXX", "Got tap at " + pt.toString )
+
+    Toast.makeText( this, "Tap at " + pt.toString, Toast.LENGTH_SHORT ).show
+    return true
+  }
 }
