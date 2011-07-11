@@ -51,7 +51,7 @@ class TodoMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
 {
   lazy val mapView = findView( TR.mapview )
-  lazy val icon = getResources.getDrawable( android.R.drawable.btn_star_big_on )
+  lazy val icons = TodoMaps.icons( this )
   var editingList: TodoList = null;
 
   onCreate { 
@@ -74,12 +74,15 @@ class TodoMapActivity
     if (editingList != list) {
       editingList = list
       onChangeTo( list.places ) { places =>
-        this.runOnUiThread{ setOverlaysForEdit( list, places )}
+        this.runOnUiThread{ setOverlaysForEdit( list, places, icons(0).large )}
       }
     }
   }
 
-  def setOverlaysForEdit( list: TodoList, places: IndexedSeq[TodoPlace] ):Unit = {
+  def setOverlaysForEdit( list: TodoList, 
+                          places: IndexedSeq[TodoPlace], 
+                          icon: Drawable ):Unit = 
+  {
     // Adding or removing overlay items from a preexisting ItemizedOverlay
     // can get really fussy.  So, we just clear 'em out and redo from scratch,
     // for the moment.
@@ -97,3 +100,24 @@ class TodoMapActivity
     return true
   }
 }
+
+object TodoMaps {
+
+  case class IconSet( small: Drawable, large: Drawable )
+
+  val numIcons = 3 
+
+  def icons( ctx: Context ):IndexedSeq[ IconSet ] = {
+
+    val rsrc = ctx.getResources
+    val drawable = ( id: Int ) => rsrc.getDrawable( id )
+
+    return Array( IconSet( drawable( R.drawable.bluecircle ), 
+                           drawable( R.drawable.bluecirclebig )),
+                  IconSet( drawable( R.drawable.redcircle ),  
+                           drawable( R.drawable.redcirclebig )),
+                  IconSet( drawable( R.drawable.greencircle ),
+                           drawable( R.drawable.greencirclebig )))
+  }
+}
+
