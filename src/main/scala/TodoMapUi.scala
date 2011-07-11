@@ -8,12 +8,15 @@ import com.google.android.maps.GeoPoint
 
 import org.positronicnet.maps.PositronicItemizedOverlay
 import org.positronicnet.ui.PositronicActivityHelpers
+import org.positronicnet.ui.IndexedSeqAdapter
 
 import android.os.Bundle
 import android.graphics.drawable.Drawable
 import android.app.AlertDialog
 import android.content.Context
+import android.view.View
 import android.widget.Toast
+import android.widget.ImageView
 import android.util.Log
 
 class EditPlacesOverlay( activity: TodoMapActivity, 
@@ -51,6 +54,7 @@ class TodoMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
 {
   lazy val mapView = findView( TR.mapview )
+  lazy val colorSpinner = findView( TR.color_spinner )
   lazy val icons = TodoMaps.icons( this )
   var editingList: TodoList = null;
 
@@ -66,12 +70,18 @@ class TodoMapActivity
       val selectedItem = listChooser.getAdapter.getItem( posn )
       prepareToEdit( selectedItem.asInstanceOf[ TodoList ] )
     }
+
+    colorSpinner.setAdapter( new ListIconChoiceAdapter( this ) )
+    colorSpinner.onItemSelected{ (view, posn, id) => 
+      TodoLists.setListIconIdx( editingList, posn )
+    }
   }
 
   def isRouteDisplayed = false
 
   def prepareToEdit( list: TodoList ) = {
     if (editingList != list) {
+      colorSpinner.setSelection( list.iconIdx, false )
       editingList = list
       onChangeTo( list.places ) { places =>
         this.runOnUiThread{ setOverlaysForEdit( list, places, icons(0).large )}
@@ -112,12 +122,21 @@ object TodoMaps {
     val rsrc = ctx.getResources
     val drawable = ( id: Int ) => rsrc.getDrawable( id )
 
-    return Array( IconSet( drawable( R.drawable.bluecircle ), 
-                           drawable( R.drawable.bluecirclebig )),
-                  IconSet( drawable( R.drawable.redcircle ),  
-                           drawable( R.drawable.redcirclebig )),
-                  IconSet( drawable( R.drawable.greencircle ),
-                           drawable( R.drawable.greencirclebig )))
+    return IndexedSeq( IconSet( drawable( R.drawable.bluecircle ), 
+                                drawable( R.drawable.bluecirclebig )),
+                       IconSet( drawable( R.drawable.redcircle ),  
+                                drawable( R.drawable.redcirclebig )),
+                       IconSet( drawable( R.drawable.greencircle ),
+                                drawable( R.drawable.greencirclebig )))
   }
 }
+
+class ListIconChoiceAdapter( activity: TodoMapActivity )
+ extends IndexedSeqAdapter( TodoMaps.icons( activity ),
+                            itemViewResourceId = R.layout.image_view )
+{
+  override def bindView( view: View, iconSet: TodoMaps.IconSet ) =
+    view.asInstanceOf[ ImageView ].setImageDrawable( iconSet.large )
+}
+                            
 
