@@ -19,7 +19,7 @@
     <org.positronicnet.ui.PositronicSpinner
       android:id="@+id/color_spinner"
       android:layout_width="wrap_content"
-      android:layout_height="wrap_content"/>
+      android:layout_height="fill_parent"/>
   </LinearLayout>
   <com.google.android.maps.MapView
     android:id="@+id/mapview"
