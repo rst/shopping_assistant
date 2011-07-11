@@ -10,6 +10,8 @@ import org.positronicnet.db.DbQuery
 import org.positronicnet.util.WorkerThread
 import org.positronicnet.util.ChangeManager
 
+import scala.collection.mutable.ArrayBuffer
+
 // Our domain model classes, such as they are:  Todo Items, Lists, etc.
 // 
 // There's no ORM here, just an AREL-style gloss for building SQL, and
@@ -57,7 +59,16 @@ object TodoDb
              )
          """,
          " alter table todo_lists add column is_deleted integer default 0 ",
-         " alter table todo_items add column is_deleted integer default 0 "
+         " alter table todo_items add column is_deleted integer default 0 ",
+         """ create table todo_places (
+               _id          integer primary key,
+               todo_list_id integer,
+               latitude     integer,
+               longitude    integer,
+               description  string,
+               is_deleted   integer default 0
+             )
+         """
         )
   
 }
@@ -77,6 +88,27 @@ object TodoItem {
 
   def fromCursor( c: PositronicCursor ) = 
     TodoItem( c.getLong( 0 ), c.getString( 1 ), c.getBoolean( 2 ))
+
+}
+
+//================================================================
+// "Todo place" model.
+//
+// Places associated with a particular shopping list.
+// Latitude and longitude are as per platform standard rep
+// (degrees * 1e6, truncated to integer).
+
+case class TodoPlace( var id: Long, var description: String,
+                      var latitude: Int, var longitude: Int )
+
+object TodoPlace {
+
+  def doQuery( query: DbQuery ) = 
+    query.select("_id", "description", "latitude", "longitude")
+
+  def fromCursor( c: PositronicCursor ) =
+    TodoPlace( c.getLong( 0 ), c.getString( 1 ), 
+               c.getInt( 2 ),  c.getInt( 3 ) )
 
 }
 
@@ -104,6 +136,9 @@ case class TodoList( var id: Long, var name: String )
     }
   }
 
+  lazy val numUndoneItems = valueStream {
+    dbItems.whereEq( "is_done" -> false ).count 
+  }
   lazy val numDoneItems = valueStream { 
     dbItems.whereEq( "is_done" -> true ).count 
   }
@@ -134,6 +169,40 @@ case class TodoList( var id: Long, var name: String )
   }
 
   def undeleteItems = doChange { dbItemsAll.update( "is_deleted" -> false ) }
+
+  // Likewise for places, more or less... 
+
+  private lazy val dbPlacesAll = 
+    TodoDb( "todo_places" ).whereEq( "todo_list_id" -> id )
+  private lazy val dbPlaces = 
+    dbPlacesAll.whereEq( "is_deleted" -> false )
+
+  lazy val places = valueStream { 
+    TodoPlace.doQuery( dbPlaces ).map{ TodoPlace.fromCursor( _ ) }
+  }
+  lazy val hasDeletedPlace = valueStream {
+    dbPlacesAll.whereEq( "is_deleted" -> true ).count > 0
+  }
+
+  def addPlace( latitude: Int, longitude: Int ) = doChange {
+    TodoDb( "todo_places" ).insert(
+      "todo_list_id" -> this.id,
+      "latitude"     -> latitude,
+      "longitude"    -> longitude )
+  }
+    
+  def setPlaceDescription( place: TodoPlace, desc: String ) = doChange {
+    dbPlaces.whereEq("_id" -> place.id).update( "description" -> desc )
+  }
+
+  def deletePlace( place: TodoPlace ) = doChange {
+    dbPlacesAll.whereEq( "is_deleted" -> true ).delete
+    dbPlacesAll.whereEq( "_id" -> place.id ).update( "is_deleted" -> true )
+  }
+
+  def undeletePlace = doChange {
+    dbPlacesAll.update( "is_deleted" -> false )
+  }
 }
 
 object TodoList {

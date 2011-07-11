@@ -16,28 +16,29 @@ import android.content.Context
 import android.widget.Toast
 import android.util.Log
 
-class DummyItemOverlay( ctx: Context, d: Drawable )
+class EditPlacesOverlay( activity: TodoMapActivity, 
+                         list: TodoList, 
+                         places: IndexedSeq[ TodoPlace ],
+                         d: Drawable )
  extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
-  private val items = Array( 
-    new OverlayItem( new GeoPoint(19240000,-99120000), 
-                     "Hola, Mundo!", "I'm in Mexico City!"),
-    new OverlayItem( new GeoPoint(35410000, 139460000),
-                     "Sekai, konichiwa!", "I'm in Japan!")
-  )
+  val defaultDescription = "A " + list.name
+
+  var items:  IndexedSeq[OverlayItem] = 
+    for ( place <- places )
+    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
+                           defaultDescription,
+                           "No item count on edit screen!" )
+
+  populate
 
   def size = items.size
   def createItem( i: Int ):OverlayItem = items( i )
 
   override def onTap( i: Int ): Boolean = {
-    val dialog = new AlertDialog.Builder( ctx )
-    dialog.setTitle( items(i).getTitle )
-    dialog.setMessage( items(i).getSnippet )
-    dialog.show
-    return true;
+    list.deletePlace( places( i ) )
+    return true
   }
-
-  this.populate()
 }
 
 class NoteTapOverlay( activity: TodoMapActivity )
@@ -49,27 +50,50 @@ class NoteTapOverlay( activity: TodoMapActivity )
 class TodoMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
 {
+  lazy val mapView = findView( TR.mapview )
+  lazy val icon = getResources.getDrawable( android.R.drawable.btn_star_big_on )
+  var editingList: TodoList = null;
+
   onCreate { 
     setContentView( R.layout.map ) 
 
-    val icon = getResources.getDrawable( android.R.drawable.btn_star_big_on )
     val listChooser = findView( TR.list_chooser )
 
-    findView( TR.mapview ).getOverlays.add( new NoteTapOverlay( this ))
-    findView( TR.mapview ).getOverlays.add( new DummyItemOverlay( this, icon ))
     findView( TR.mapview ).setBuiltInZoomControls( true )
 
     listChooser.setAdapter( new TodosAdapter( this ))
     listChooser.onItemSelected{ (view, posn, id) =>
-      val item = listChooser.getAdapter.getItem( posn )
-      toastShort( "selected " + item.asInstanceOf[ TodoList ].name ) 
+      val selectedItem = listChooser.getAdapter.getItem( posn )
+      prepareToEdit( selectedItem.asInstanceOf[ TodoList ] )
     }
   }
 
   def isRouteDisplayed = false
 
+  def prepareToEdit( list: TodoList ) = {
+    if (editingList != list) {
+      editingList = list
+      onChangeTo( list.places ) { places =>
+        this.runOnUiThread{ setOverlaysForEdit( list, places )}
+      }
+    }
+  }
+
+  def setOverlaysForEdit( list: TodoList, places: IndexedSeq[TodoPlace] ):Unit = {
+    // Adding or removing overlay items from a preexisting ItemizedOverlay
+    // can get really fussy.  So, we just clear 'em out and redo from scratch,
+    // for the moment.
+
+    mapView.getOverlays.clear
+    mapView.getOverlays.add( new NoteTapOverlay( this ))
+    mapView.getOverlays.add( new EditPlacesOverlay( this, list, places, icon ))
+    mapView.invalidate
+  }
+
   def unclaimedTap( pt: GeoPoint ): Boolean = {
-    toastShort( "Tap at " + pt.toString )
+    if (editingList == null)
+      return false;
+    editingList.addPlace( pt.getLatitudeE6, pt.getLongitudeE6 )
     return true
   }
 }
