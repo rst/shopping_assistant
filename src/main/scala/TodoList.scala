@@ -68,7 +68,8 @@ object TodoDb
                description  string,
                is_deleted   integer default 0
              )
-         """
+         """,
+         " alter table todo_lists add column icon_idx integer default 0 "
         )
   
 }
@@ -116,7 +117,7 @@ object TodoPlace {
 // "Todo list" model.  
 // Includes most actual manipulation of items.
 
-case class TodoList( var id: Long, var name: String )
+case class TodoList( var id: Long, var name: String, var iconIdx: Int )
  extends ChangeManager( TodoDb )
 {
   // Setting up (and use of) prebaked query fragments.
@@ -207,26 +208,31 @@ case class TodoList( var id: Long, var name: String )
 
 object TodoList {
 
-  def doQuery( query: DbQuery ) = query.select("_id", "name")
+  def doQuery( query: DbQuery ) = query.select("_id", "name", "icon_idx")
 
   def fromCursor( c: PositronicCursor ) = 
-    TodoList( c.getLong( 0 ), c.getString( 1 ))
+    TodoList( c.getLong( 0 ), c.getString( 1 ), c.getInt( 2 ))
 
   def create( name: String ) = TodoDb( "todo_lists" ).insert( "name" -> name )
 
   // Communicating these through intents...
   // Sadly, this is easier than making them serializable.
 
-  val intentIdKey = "todoListId"; val intentNameKey = "todoListName"
+  val intentIdKey   = "todoListId"; 
+  val intentNameKey = "todoListName"
+  val intentIconKey = "todoListIcon"
 
   def intoIntent( list: TodoList, intent: Intent ) = {
     intent.putExtra( intentIdKey,   list.id )
     intent.putExtra( intentNameKey, list.name )
+    intent.putExtra( intentIconKey, list.iconIdx )
   }
 
   def fromIntent( intent: Intent ) = 
     TodoList( intent.getLongExtra( intentIdKey, -1 ), 
-              intent.getStringExtra( intentNameKey ))
+              intent.getStringExtra( intentNameKey ),
+              intent.getIntExtra( intentIconKey, -1 )
+            )
 }
 
 //================================================================
@@ -251,6 +257,10 @@ object TodoLists extends ChangeManager( TodoDb )
 
   def setListName( list: TodoList, newName: String ) = doChange {
     dbLists.whereEq("_id" -> list.id).update( "name" -> newName )
+  }
+
+  def setListIconIdx( list: TodoList, newIdx: Int ) = doChange {
+    dbLists.whereEq("_id" -> list.id).update( "icon_idx" -> newIdx )
   }
 
   def removeList( victim: TodoList ) = doChange {
