@@ -73,7 +73,10 @@ class TodoMapActivity
 
     colorSpinner.setAdapter( new ListIconChoiceAdapter( this ) )
     colorSpinner.onItemSelected{ (view, posn, id) => 
-      TodoLists.setListIconIdx( editingList, posn )
+      if (editingList != null) {
+        TodoLists.setListIconIdx( editingList, posn )
+        setOverlaysForEdit( editingList, editingList.places.value )
+      }
     }
   }
 
@@ -84,18 +87,19 @@ class TodoMapActivity
       colorSpinner.setSelection( list.iconIdx, false )
       editingList = list
       onChangeTo( list.places ) { places =>
-        this.runOnUiThread{ setOverlaysForEdit( list, places, icons(0).large )}
+        this.runOnUiThread{ setOverlaysForEdit( list, places )}
       }
     }
   }
 
   def setOverlaysForEdit( list: TodoList, 
-                          places: IndexedSeq[TodoPlace], 
-                          icon: Drawable ):Unit = 
+                          places: IndexedSeq[TodoPlace] ):Unit = 
   {
     // Adding or removing overlay items from a preexisting ItemizedOverlay
     // can get really fussy.  So, we just clear 'em out and redo from scratch,
     // for the moment.
+
+    val icon = icons( list.iconIdx ).large
 
     mapView.getOverlays.clear
     mapView.getOverlays.add( new NoteTapOverlay( this ))

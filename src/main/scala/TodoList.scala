@@ -260,6 +260,7 @@ object TodoLists extends ChangeManager( TodoDb )
   }
 
   def setListIconIdx( list: TodoList, newIdx: Int ) = doChange {
+    list.iconIdx = newIdx               // Yeah, an ORM would be nice here...
     dbLists.whereEq("_id" -> list.id).update( "icon_idx" -> newIdx )
   }
 
