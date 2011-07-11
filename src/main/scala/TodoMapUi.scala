@@ -19,7 +19,7 @@ import android.widget.Toast
 import android.widget.ImageView
 import android.util.Log
 
-class EditPlacesOverlay( activity: TodoMapActivity, 
+class TodoPlacesOverlay( activity: TodoMapActivity, 
                          list: TodoList, 
                          places: IndexedSeq[ TodoPlace ],
                          d: Drawable )
@@ -37,7 +37,14 @@ class EditPlacesOverlay( activity: TodoMapActivity,
 
   def size = items.size
   def createItem( i: Int ):OverlayItem = items( i )
+}
 
+class EditPlacesOverlay( activity: TodoMapActivity, 
+                         list: TodoList, 
+                         places: IndexedSeq[ TodoPlace ],
+                         d: Drawable )
+  extends TodoPlacesOverlay( activity, list, places, d )
+{
   override def onTap( i: Int ): Boolean = {
     list.deletePlace( places( i ) )
     return true
@@ -55,13 +62,13 @@ class TodoMapActivity
 {
   lazy val mapView = findView( TR.mapview )
   lazy val colorSpinner = findView( TR.color_spinner )
+  lazy val listChooser = findView( TR.list_chooser )
+
   lazy val icons = TodoMaps.icons( this )
   var editingList: TodoList = null;
 
   onCreate { 
     setContentView( R.layout.map ) 
-
-    val listChooser = findView( TR.list_chooser )
 
     findView( TR.mapview ).setBuiltInZoomControls( true )
 
@@ -84,26 +91,37 @@ class TodoMapActivity
 
   def prepareToEdit( list: TodoList ) = {
     if (editingList != list) {
-      colorSpinner.setSelection( list.iconIdx, false )
       editingList = list
+      colorSpinner.setSelection( list.iconIdx, false )
       onChangeTo( list.places ) { places =>
         this.runOnUiThread{ setOverlaysForEdit( list, places )}
       }
     }
   }
 
-  def setOverlaysForEdit( list: TodoList, 
+  def setOverlaysForEdit( listToEdit: TodoList, 
                           places: IndexedSeq[TodoPlace] ):Unit = 
   {
     // Adding or removing overlay items from a preexisting ItemizedOverlay
     // can get really fussy.  So, we just clear 'em out and redo from scratch,
     // for the moment.
 
-    val icon = icons( list.iconIdx ).large
+    val listsAdapter = listChooser.getAdapter
 
     mapView.getOverlays.clear
     mapView.getOverlays.add( new NoteTapOverlay( this ))
-    mapView.getOverlays.add( new EditPlacesOverlay( this, list, places, icon ))
+
+    for (i <- Range( 0, listsAdapter.getCount )) {
+      val list = listsAdapter.getItem( i ).asInstanceOf[ TodoList ]
+      if (list.id != listToEdit.id) 
+        mapView.getOverlays.add( 
+          new TodoPlacesOverlay( this, list, list.places.value,
+                                 icons( list.iconIdx ).small ))
+    }
+
+    mapView.getOverlays.add( 
+      new EditPlacesOverlay( this, listToEdit, places, 
+                             icons( listToEdit.iconIdx ).large ))
     mapView.invalidate
   }
 
