@@ -1,0 +1,10 @@
+Jeff Gilfelt's android-mapviewballoons package, originally sourced from:
+
+  https://github.com/jgilfelt/android-mapviewballoons.git
+
+Only alterations here are rearranging the files to match sbt's conventions
+for project layout, and adding the gimmicked R.java file that references
+the application's.  (It's a kludge, and the stuff in project.scala to
+pick up the resources and source files from this directory is worse, but
+even the standard build process requires access to "library project" 
+components as source files, and ignores their manifests...)
