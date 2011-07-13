@@ -12,7 +12,7 @@
             </intent-filter>
         </activity>
         <activity android:label="One Todo List" android:name=".TodoActivity"/>
-        <activity android:label="Map Interface" android:name=".TodoMapActivity"/>
+        <activity android:label="@string/show_map" android:name=".TodoMapActivity"/>
         <uses-library android:name="com.google.android.maps"/>
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>

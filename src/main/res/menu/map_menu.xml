@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+  android:name="Todo-list item operations">
+  <item android:id="@+id/edit"
+        android:title="Edit Places"/>
+  <item android:id="@+id/view"
+        android:title="End Place Edit"/>
+  <item android:id="@+id/editlists"
+        android:title="Edit Todos"/>
+</menu>

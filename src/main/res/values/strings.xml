@@ -5,4 +5,6 @@
     <string name="no_tasks_done">No tasks marked done.  Tap on one to mark it.</string>
     <string name="list_deleted">Shopping list deleted.  To recover the
       last deleted list, choose "Undelete" from the Options Menu.</string>
+    <string name="show_map">View shops.  Pending items show bigger.</string>
+    <string name="edit_map">Edit shop places</string>
 </resources>
