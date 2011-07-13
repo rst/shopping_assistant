@@ -24,9 +24,9 @@ import android.widget.SpinnerAdapter
 import android.graphics.Paint
 import android.graphics.Canvas
 
-// Adapter to wire up TodoList changes to the UI.
+// Adapter to wire up ShoppingList changes to the UI.
 //
-// Registers with the "source" (our TodoLists singleton) to be
+// Registers with the "source" (our ShoppingLists singleton) to be
 // notified whenever its underlying data set is changed (or reloaded),
 // so long as the activity is running.
 //
@@ -35,12 +35,12 @@ import android.graphics.Canvas
 
 class ShoppingListsAdapter( activity: PositronicActivityHelpers )
  extends CursorSourceAdapter( activity, 
-                              source = TodoLists.lists,
-                              converter = TodoList.fromCursor(_),
+                              source = ShoppingLists.lists,
+                              converter = ShoppingList.fromCursor(_),
                               itemViewResourceId = R.layout.shoppinglist_row )
  with SpinnerAdapter
 {
-  def bindItem( view: View, list: TodoList ) =
+  def bindItem( view: View, list: ShoppingList ) =
     view.asInstanceOf[ TextView ].setText( list.name )
 }
 
@@ -60,7 +60,7 @@ class ShoppingListsActivity
 
     // Wire listsView to the database
 
-    useAppFacility( TodoDb )            // Open DB; arrange to close on destroy
+    useAppFacility( ShoppingDb ) // Open DB; arrange to close on destroy
     listsView.setAdapter( new ShoppingListsAdapter( this ))
 
     // Listen for events on widgets
@@ -88,37 +88,37 @@ class ShoppingListsActivity
   // Determining relevant context for the ContextMenu
 
   def getContextItem( menuInfo: ContextMenu.ContextMenuInfo, view: View ) =
-    listsView.selectedContextMenuItem( menuInfo ).asInstanceOf[ TodoList ]
+    listsView.selectedContextMenuItem( menuInfo ).asInstanceOf[ ShoppingList ]
 
   // Running UI commands
 
   def doAdd = {
     val str = findView( TR.newListName ).getText.toString
     if ( str != "" ) {
-      TodoLists.addList( name = str )
+      ShoppingLists.addList( name = str )
       findView( TR.newListName ).setText("")
     }
   }
 
-  def doRename( list: TodoList ) =
+  def doRename( list: ShoppingList ) =
     renameDialog.doEdit( list.name ){ 
-      TodoLists.setListName( list, _ )
+      ShoppingLists.setListName( list, _ )
     }
 
-  def doDelete( list: TodoList ) = {
-    TodoLists.removeList( list )
+  def doDelete( list: ShoppingList ) = {
+    ShoppingLists.removeList( list )
     toast( R.string.list_deleted, Toast.LENGTH_LONG )
   }
 
   def doUndelete = { 
-    if (TodoLists.numDeletedLists.value > 0) TodoLists.undelete
+    if (ShoppingLists.numDeletedLists.value > 0) ShoppingLists.undelete
     else toast( R.string.undeletes_exhausted )
   }
 
   def viewListAt( posn: Int ) {
     val intent = new Intent( this, classOf[ ShoppingListActivity ] )
-    val theList = listsView.getAdapter.getItem( posn ).asInstanceOf[ TodoList ]
-    TodoList.intoIntent( theList, intent )
+    val theList = listsView.getAdapter.getItem(posn).asInstanceOf[ShoppingList]
+    ShoppingList.intoIntent( theList, intent )
     startActivity( intent )
   }
 }
@@ -146,13 +146,13 @@ class EditStringDialog( base: PositronicActivity )
   }
 }
 
-// And now, the other activity, which manages an individual todo list's items.
+// The activity which manages an individual shopping list's items.
 
 class ShoppingListActivity 
  extends PositronicActivity( layoutResourceId = R.layout.shopping_one_list ) 
  with ViewFinder 
 {
-  var theList: TodoList = null
+  var theList: ShoppingList = null
 
   lazy val newItemText = findView( TR.newItemText )
   lazy val listItemsQuery = theList.itemsQuery( initialShowDone = true )
@@ -166,11 +166,11 @@ class ShoppingListActivity
 
     // Setup --- get list out of our Intent, and hook up the listItemsView
 
-    theList = TodoList.fromIntent( getIntent )
+    theList = ShoppingList.fromIntent( getIntent )
     setTitle( "Todo for: " + theList.name )
 
-    useAppFacility( TodoDb )
-    listItemsView.setAdapter( new TodoItemsAdapter( this, listItemsQuery ) )
+    useAppFacility( ShoppingDb )
+    listItemsView.setAdapter( new ShopItemsAdapter( this, listItemsQuery ) )
 
     // Event handlers...
 
@@ -196,10 +196,10 @@ class ShoppingListActivity
   // Finding target items for listItemsView taps (including the ContextMenu)
 
   def getContextItem( menuInfo: ContextMenu.ContextMenuInfo, view: View ) =
-    listItemsView.selectedContextMenuItem( menuInfo ).asInstanceOf[ TodoItem ]
+    listItemsView.selectedContextMenuItem( menuInfo ).asInstanceOf[ ShopItem ]
 
   def getDisplayedItem( posn: Int ) = 
-    listItemsView.getAdapter.getItem( posn ).asInstanceOf[ TodoItem ]
+    listItemsView.getAdapter.getItem( posn ).asInstanceOf[ ShopItem ]
 
   // Running UI commands
 
@@ -211,12 +211,12 @@ class ShoppingListActivity
     }
   }
 
-  def doEdit( it: TodoItem ) = 
+  def doEdit( it: ShopItem ) = 
     editDialog.doEdit( it.description ) {
        theList.setItemDescription( it, _ )
     }
 
-  def toggleDone( it: TodoItem ) = theList.setItemDone( it, !it.isDone )
+  def toggleDone( it: ShopItem ) = theList.setItemDone( it, !it.isDone )
 
   def deleteWhereDone = {
     if (theList.numDoneItems.value > 0) 
@@ -233,26 +233,26 @@ class ShoppingListActivity
   }
 }
 
-class TodoItemsAdapter( activity: PositronicActivity, 
+class ShopItemsAdapter( activity: PositronicActivity, 
                         query: ChangeNotifications[PositronicCursor] )
  extends CursorSourceAdapter( activity,
                               source = query,
-                              converter = TodoItem.fromCursor(_),
+                              converter = ShopItem.fromCursor(_),
                               itemViewResourceId = R.layout.item_row )
 {
-  def bindItem( view: View, it: TodoItem ) =
-    view.asInstanceOf[ TodoItemView ].setTodoItem( it )
+  def bindItem( view: View, it: ShopItem ) =
+    view.asInstanceOf[ ShopItemView ].setShopItem( it )
 }
 
-// View for TodoItems:  TextView which adds strikethrough if the item "isDone" 
+// View for ShopItems:  adds strikethrough if the item "isDone" 
 
-class TodoItemView( context: Context, attrs: AttributeSet = null )
- extends TextView( context, attrs ) 
+class ShopItemView( context: Context, attrs: AttributeSet = null )
+  extends TextView( context, attrs ) 
 {
-   var theItem: TodoItem = null
-   def getTodoItem = theItem
+   var theItem: ShopItem = null
+   def getShopItem = theItem
 
-   def setTodoItem( item: TodoItem ) = {
+   def setShopItem( item: ShopItem ) = {
      theItem = item
      setText( item.description )
      setPaintFlags( 

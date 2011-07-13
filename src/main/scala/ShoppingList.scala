@@ -12,7 +12,7 @@ import org.positronicnet.util.ChangeManager
 
 import scala.collection.mutable.ArrayBuffer
 
-// Our domain model classes, such as they are:  Todo Items, Lists, etc.
+// Our domain model classes, such as they are:  Shops, Shopping Lists, etc.
 // 
 // There's no ORM here, just an AREL-style gloss for building SQL, and
 // a stylized way of building model classes that use it.  But it still
@@ -34,8 +34,8 @@ import scala.collection.mutable.ArrayBuffer
 
 // Start by defining the DB schema...
 
-object TodoDb 
- extends Database( filename = "todos.sqlite3", logTag = "todo" ) 
+object ShoppingDb 
+ extends Database( filename = "shopping.sqlite3", logTag = "shopping" ) 
  with WorkerThread
 {
   // This gets fed to a SQLiteOpenHelper, which implements the following
@@ -46,92 +46,94 @@ object TodoDb
   // "onCreate" just runs 'em all.
 
   def schemaUpdates =
-    List(""" create table todo_lists (
+    List(""" create table shopping_lists (
                _id integer primary key,
-               name string
+               name string,
+               is_deleted integer default 0,
+               icon_idx integer default 0
              )
          """,
-         """ create table todo_items (
+         """ create table shop_items (
                _id integer primary key,
-               todo_list_id integer,
+               shopping_list_id integer,
                description string,
-               is_done integer
+               is_done integer,
+               is_deleted integer default 0
              )
          """,
-         " alter table todo_lists add column is_deleted integer default 0 ",
-         " alter table todo_items add column is_deleted integer default 0 ",
-         """ create table todo_places (
+         """ create table shops (
                _id          integer primary key,
-               todo_list_id integer,
+               shopping_list_id integer,
                latitude     integer,
                longitude    integer,
                description  string,
                is_deleted   integer default 0
              )
-         """,
-         " alter table todo_lists add column icon_idx integer default 0 "
+         """
         )
   
 }
 
 //================================================================
-// "Todo item" model.
+// "Shop item" model.
 // 
-// Mostly actually manipulated from within TodoList; with a more
+// Mostly actually manipulated from within ShoppingList; with a more
 // complicated schema, it might be better to get these query fragments
-// from methods invoked on the TodoItem companion object.
+// from methods invoked on the ShopItem companion object.
 
-case class TodoItem(var id: Long, var description: String, var isDone: Boolean)
+case class ShopItem(var id: Long, var description: String, var isDone: Boolean)
 
-object TodoItem {
+object ShopItem {
 
   def doQuery( query: DbQuery )= query.select("_id", "description", "is_done")
 
   def fromCursor( c: PositronicCursor ) = 
-    TodoItem( c.getLong( 0 ), c.getString( 1 ), c.getBoolean( 2 ))
+    ShopItem( c.getLong( 0 ), c.getString( 1 ), c.getBoolean( 2 ))
 
 }
 
 //================================================================
-// "Todo place" model.
+// "Shop" model.
 //
 // Places associated with a particular shopping list.
-// Latitude and longitude are as per platform standard rep
+// Latitude and longitude are as per Map UI standard rep
 // (degrees * 1e6, truncated to integer).
 
-case class TodoPlace( var id: Long, var description: String,
+case class Shop( var id: Long, var description: String,
                       var latitude: Int, var longitude: Int )
 
-object TodoPlace {
+object Shop {
 
   def doQuery( query: DbQuery ) = 
     query.select("_id", "description", "latitude", "longitude")
 
   def fromCursor( c: PositronicCursor ) =
-    TodoPlace( c.getLong( 0 ), c.getString( 1 ), 
+    Shop( c.getLong( 0 ), c.getString( 1 ), 
                c.getInt( 2 ),  c.getInt( 3 ) )
 
 }
 
 //================================================================
-// "Todo list" model.  
-// Includes most actual manipulation of items.
+// "Shopping list" model.  
+// Includes most actual manipulation of items and shops.
 
-case class TodoList( var id: Long, var name: String, var iconIdx: Int )
- extends ChangeManager( TodoDb )
+case class ShoppingList( var id: Long, var name: String, var iconIdx: Int )
+ extends ChangeManager( ShoppingDb )
 {
   // Setting up (and use of) prebaked query fragments.
 
-  private lazy val dbItemsAll = TodoDb("todo_items").whereEq("todo_list_id"->id)
-  private lazy val dbItems    = dbItemsAll.whereEq( "is_deleted" -> false )
+  private lazy val dbItemsAll = 
+    ShoppingDb( "shop_items" ).whereEq( "shopping_list_id" -> id )
+  private lazy val dbItems = 
+    dbItemsAll.whereEq( "is_deleted" -> false )
 
   // Things that UI elements (etc.) can monitor
 
-  lazy val items = cursorStream { TodoItem.doQuery( dbItems ) }
+  lazy val items = cursorStream { ShopItem.doQuery( dbItems ) }
 
   def itemsQuery( initialShowDone: Boolean ) = {
     cursorQuery( initialShowDone ){ showDone => 
-      TodoItem.doQuery(
+      ShopItem.doQuery(
         if ( showDone ) dbItems else dbItems.whereEq( "is_done" -> false )
       )
     }
@@ -150,17 +152,17 @@ case class TodoList( var id: Long, var name: String, var iconIdx: Int )
   // Changes that UI elements (etc.) can ask for
 
   def addItem( description: String, isDone: Boolean = false ) = doChange { 
-    TodoDb( "todo_items" ).insert( 
-        "todo_list_id" -> this.id, 
-        "description"  -> description,
-        "is_done"      -> isDone )
+    ShoppingDb( "shop_items" ).insert( 
+        "shopping_list_id" -> this.id, 
+        "description"      -> description,
+        "is_done"          -> isDone )
   }
 
-  def setItemDescription( it: TodoItem, desc: String ) = doChange { 
+  def setItemDescription( it: ShopItem, desc: String ) = doChange { 
     dbItems.whereEq("_id" -> it.id).update( "description" -> desc )
   }
 
-  def setItemDone( it: TodoItem, isDone: Boolean ) = doChange { 
+  def setItemDone( it: ShopItem, isDone: Boolean ) = doChange { 
     dbItems.whereEq("_id" -> it.id).update( "is_done" -> isDone )
   }
 
@@ -171,49 +173,49 @@ case class TodoList( var id: Long, var name: String, var iconIdx: Int )
 
   def undeleteItems = doChange { dbItemsAll.update( "is_deleted" -> false ) }
 
-  // Likewise for places, more or less... 
+  // Likewise for shops, more or less... 
 
-  private lazy val dbPlacesAll = 
-    TodoDb( "todo_places" ).whereEq( "todo_list_id" -> id )
-  private lazy val dbPlaces = 
-    dbPlacesAll.whereEq( "is_deleted" -> false )
+  private lazy val dbShopsAll = 
+    ShoppingDb( "shops" ).whereEq( "shopping_list_id" -> id )
+  private lazy val dbShops = 
+    dbShopsAll.whereEq( "is_deleted" -> false )
 
   lazy val places = valueStream { 
-    TodoPlace.doQuery( dbPlaces ).map{ TodoPlace.fromCursor( _ ) }
+    Shop.doQuery( dbShops ).map{ Shop.fromCursor( _ ) }
   }
   lazy val hasDeletedPlace = valueStream {
-    dbPlacesAll.whereEq( "is_deleted" -> true ).count > 0
+    dbShopsAll.whereEq( "is_deleted" -> true ).count > 0
   }
 
   def addPlace( latitude: Int, longitude: Int ) = doChange {
-    TodoDb( "todo_places" ).insert(
-      "todo_list_id" -> this.id,
-      "latitude"     -> latitude,
-      "longitude"    -> longitude )
+    ShoppingDb( "shops" ).insert(
+      "shopping_list_id" -> this.id,
+      "latitude"         -> latitude,
+      "longitude"        -> longitude )
   }
     
-  def setPlaceDescription( place: TodoPlace, desc: String ) = doChange {
-    dbPlaces.whereEq("_id" -> place.id).update( "description" -> desc )
+  def setPlaceDescription( place: Shop, desc: String ) = doChange {
+    dbShops.whereEq("_id" -> place.id).update( "description" -> desc )
   }
 
-  def deletePlace( place: TodoPlace ) = doChange {
-    dbPlacesAll.whereEq( "is_deleted" -> true ).delete
-    dbPlacesAll.whereEq( "_id" -> place.id ).update( "is_deleted" -> true )
+  def deletePlace( place: Shop ) = doChange {
+    dbShopsAll.whereEq( "is_deleted" -> true ).delete
+    dbShopsAll.whereEq( "_id" -> place.id ).update( "is_deleted" -> true )
   }
 
   def undeletePlace = doChange {
-    dbPlacesAll.update( "is_deleted" -> false )
+    dbShopsAll.update( "is_deleted" -> false )
   }
 }
 
-object TodoList {
+object ShoppingList {
 
   def doQuery( query: DbQuery ) = query.select("_id", "name", "icon_idx")
 
   def fromCursor( c: PositronicCursor ) = 
-    TodoList( c.getLong( 0 ), c.getString( 1 ), c.getInt( 2 ))
+    ShoppingList( c.getLong( 0 ), c.getString( 1 ), c.getInt( 2 ))
 
-  def create( name: String ) = TodoDb( "todo_lists" ).insert( "name" -> name )
+  def create( name: String ) = ShoppingDb("shopping_lists").insert("name"->name)
 
   // Communicating these through intents...
   // Sadly, this is easier than making them serializable.
@@ -222,14 +224,14 @@ object TodoList {
   val intentNameKey = "todoListName"
   val intentIconKey = "todoListIcon"
 
-  def intoIntent( list: TodoList, intent: Intent ) = {
+  def intoIntent( list: ShoppingList, intent: Intent ) = {
     intent.putExtra( intentIdKey,   list.id )
     intent.putExtra( intentNameKey, list.name )
     intent.putExtra( intentIconKey, list.iconIdx )
   }
 
   def fromIntent( intent: Intent ) = 
-    TodoList( intent.getLongExtra( intentIdKey, -1 ), 
+    ShoppingList( intent.getLongExtra( intentIdKey, -1 ), 
               intent.getStringExtra( intentNameKey ),
               intent.getIntExtra( intentIconKey, -1 )
             )
@@ -238,14 +240,14 @@ object TodoList {
 //================================================================
 // Singleton object to represent the set of all available lists.
 
-object TodoLists extends ChangeManager( TodoDb )
+object ShoppingLists extends ChangeManager( ShoppingDb )
 {
-  private lazy val dbListsAll = TodoDb("todo_lists")
+  private lazy val dbListsAll = ShoppingDb("shopping_lists")
   private lazy val dbLists = dbListsAll.whereEq("is_deleted"-> false)
 
   // Things UI can monitor
 
-  lazy val lists = cursorStream { TodoList.doQuery( dbLists ) }
+  lazy val lists = cursorStream { ShoppingList.doQuery( dbLists ) }
 
   lazy val numDeletedLists= valueStream {
     dbListsAll.whereEq("is_deleted"-> true).count
@@ -253,28 +255,28 @@ object TodoLists extends ChangeManager( TodoDb )
 
   // Changes UI can request
 
-  def addList( name: String ) = doChange { TodoList.create( name ) }
+  def addList( name: String ) = doChange { ShoppingList.create( name ) }
 
-  def setListName( list: TodoList, newName: String ) = doChange {
+  def setListName( list: ShoppingList, newName: String ) = doChange {
     dbLists.whereEq("_id" -> list.id).update( "name" -> newName )
   }
 
-  def setListIconIdx( list: TodoList, newIdx: Int ) = doChange {
+  def setListIconIdx( list: ShoppingList, newIdx: Int ) = doChange {
     list.iconIdx = newIdx               // Yeah, an ORM would be nice here...
     dbLists.whereEq("_id" -> list.id).update( "icon_idx" -> newIdx )
   }
 
-  def removeList( victim: TodoList ) = doChange {
+  def removeList( victim: ShoppingList ) = doChange {
 
     // Purge all previously deleted lists...
     for ( c <- dbListsAll.whereEq( "is_deleted" -> true ).select( "_id" )) {
       val purgedListId = c.getLong(0)
-      TodoDb( "todo_items" ).whereEq( "todo_list_id" -> purgedListId ).delete
-      TodoDb( "todo_lists" ).whereEq( "_id" -> purgedListId ).delete
+      ShoppingDb("shop_items").whereEq("shopping_list_id"->purgedListId).delete
+      ShoppingDb("shopping_lists").whereEq( "_id" -> purgedListId ).delete
     }
 
     // And mark this one for the axe...
-    TodoDb("todo_lists").whereEq("_id"->victim.id).update("is_deleted" -> true)
+    dbListsAll.whereEq( "_id" -> victim.id ).update( "is_deleted" -> true )
   }
 
   def undelete = doChange { dbListsAll.update( "is_deleted" -> false ) }

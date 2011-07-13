@@ -23,7 +23,7 @@ import android.util.Log
 
 // Overlay for just viewing a list
 
-class ShopPresentationOverlay( map: MapView, list: TodoList, d: Drawable ) 
+class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable ) 
   extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   val defaultDescription = "A " + list.name
@@ -41,8 +41,8 @@ class ShopPresentationOverlay( map: MapView, list: TodoList, d: Drawable )
 
 // Overlays for edit
 
-class ShopEditBgOverlay( list: TodoList, 
-                         places: IndexedSeq[ TodoPlace ],
+class ShopEditBgOverlay( list: ShoppingList, 
+                         places: IndexedSeq[ Shop ],
                          d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
@@ -60,8 +60,8 @@ class ShopEditBgOverlay( list: TodoList,
 }
 
 class EditShopsOverlay( activity: ShoppingMapActivity, 
-                        list: TodoList, 
-                        places: IndexedSeq[ TodoPlace ],
+                        list: ShoppingList, 
+                        places: IndexedSeq[ Shop ],
                         d: Drawable )
   extends ShopEditBgOverlay( list, places, d )
 {
@@ -89,8 +89,8 @@ class ShoppingMapActivity
   lazy val listChooser = findView( TR.list_chooser )
   lazy val listsAdapter = new ShoppingListsAdapter( this )
 
-  lazy val icons = TodoMaps.icons( this )
-  var editingList: TodoList = null
+  lazy val icons = ShoppingMaps.icons( this )
+  var editingList: ShoppingList = null
   var editingMode = false
 
   onCreate { 
@@ -105,7 +105,7 @@ class ShoppingMapActivity
     colorSpinner.setAdapter( new ListIconChoiceAdapter( this ) )
     colorSpinner.onItemSelected{ (view, posn, id) => 
       if (editingList != null) {
-        TodoLists.setListIconIdx( editingList, posn )
+        ShoppingLists.setListIconIdx( editingList, posn )
         setOverlaysForEdit( editingList, editingList.places.value )
       }
     }
@@ -140,7 +140,7 @@ class ShoppingMapActivity
 
   def editSelectedList = {
     if (editingMode) {
-      val list = listChooser.getSelectedItem.asInstanceOf[ TodoList ]
+      val list = listChooser.getSelectedItem.asInstanceOf[ ShoppingList ]
       if (editingList != list && editingMode) {
         editingList = list
         colorSpinner.setSelection( list.iconIdx, false )
@@ -150,8 +150,8 @@ class ShoppingMapActivity
     }
   }
 
-  def setOverlaysForEdit( listToEdit: TodoList, 
-                          places: IndexedSeq[TodoPlace] ):Unit = 
+  def setOverlaysForEdit( listToEdit: ShoppingList, 
+                          places: IndexedSeq[ Shop ] ):Unit = 
   {
     // Adding or removing overlay items from a preexisting ItemizedOverlay
     // can get really fussy.  So, we just clear 'em out and redo from scratch,
@@ -161,7 +161,7 @@ class ShoppingMapActivity
     mapView.getOverlays.add( new NoteTapOverlay( this ))
 
     for (i <- Range( 0, listsAdapter.getCount )) {
-      val list = listsAdapter.getItem( i ).asInstanceOf[ TodoList ]
+      val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
       if (list.id != listToEdit.id) 
         mapView.getOverlays.add( 
           new ShopEditBgOverlay( list, list.places.value,
@@ -177,7 +177,7 @@ class ShoppingMapActivity
   def setOverlaysForViews = {
     mapView.getOverlays.clear
     for (i <- Range( 0, listsAdapter.getCount )) {
-      val list = listsAdapter.getItem( i ).asInstanceOf[ TodoList ]
+      val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
       val icon = if (list.numUndoneItems.value > 0) icons( list.iconIdx ).large
                  else icons( list.iconIdx ).small
       mapView.getOverlays.add( 
@@ -194,7 +194,7 @@ class ShoppingMapActivity
   }
 }
 
-object TodoMaps {
+object ShoppingMaps {
 
   case class IconSet( small: Drawable, large: Drawable )
 
@@ -215,10 +215,10 @@ object TodoMaps {
 }
 
 class ListIconChoiceAdapter( activity: ShoppingMapActivity )
- extends IndexedSeqAdapter( TodoMaps.icons( activity ),
+ extends IndexedSeqAdapter( ShoppingMaps.icons( activity ),
                             itemViewResourceId = R.layout.image_view )
 {
-  override def bindView( view: View, iconSet: TodoMaps.IconSet ) =
+  override def bindView( view: View, iconSet: ShoppingMaps.IconSet ) =
     view.asInstanceOf[ ImageView ].setImageDrawable( iconSet.large )
 }
                             
