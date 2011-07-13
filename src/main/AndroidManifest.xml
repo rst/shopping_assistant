@@ -5,14 +5,14 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-sdk android:minSdkVersion="7"></uses-sdk>
     <application android:icon="@drawable/android:star_big_on" android:label="@string/app_name">
-        <activity android:label="@string/all_lists_activity_title" android:name=".TodosActivity">
+        <activity android:label="@string/all_lists_activity_title" android:name=".ShoppingListsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"></action>
                 <category android:name="android.intent.category.LAUNCHER"></category>
             </intent-filter>
         </activity>
-        <activity android:label="One Todo List" android:name=".TodoActivity"/>
-        <activity android:label="@string/show_map" android:name=".TodoMapActivity"/>
+        <activity android:label="One Todo List" android:name=".ShoppingListActivity"/>
+        <activity android:label="@string/show_map" android:name=".ShoppingMapActivity"/>
         <uses-library android:name="com.google.android.maps"/>
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>

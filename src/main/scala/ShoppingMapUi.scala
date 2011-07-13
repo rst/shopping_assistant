@@ -23,7 +23,7 @@ import android.util.Log
 
 // Overlay for just viewing a list
 
-class TodoListPresentationOverlay( map: MapView, list: TodoList, d: Drawable ) 
+class ShopPresentationOverlay( map: MapView, list: TodoList, d: Drawable ) 
   extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   val defaultDescription = "A " + list.name
@@ -41,7 +41,7 @@ class TodoListPresentationOverlay( map: MapView, list: TodoList, d: Drawable )
 
 // Overlays for edit
 
-class TodoEditBgOverlay( list: TodoList, 
+class ShopEditBgOverlay( list: TodoList, 
                          places: IndexedSeq[ TodoPlace ],
                          d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
@@ -59,11 +59,11 @@ class TodoEditBgOverlay( list: TodoList,
   populate
 }
 
-class EditPlacesOverlay( activity: TodoMapActivity, 
-                         list: TodoList, 
-                         places: IndexedSeq[ TodoPlace ],
-                         d: Drawable )
-  extends TodoEditBgOverlay( list, places, d )
+class EditShopsOverlay( activity: ShoppingMapActivity, 
+                        list: TodoList, 
+                        places: IndexedSeq[ TodoPlace ],
+                        d: Drawable )
+  extends ShopEditBgOverlay( list, places, d )
 {
   override def onTap( i: Int ): Boolean = {
     list.deletePlace( places( i ) )
@@ -73,13 +73,13 @@ class EditPlacesOverlay( activity: TodoMapActivity,
 
 // Overlay to soak up unclaimed taps on the map.
 
-class NoteTapOverlay( activity: TodoMapActivity )
+class NoteTapOverlay( activity: ShoppingMapActivity )
   extends Overlay
 {
   override def onTap( pt: GeoPoint, mv: MapView ) = activity.unclaimedTap( pt )
 }
 
-class TodoMapActivity
+class ShoppingMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
 {
   useOptionsMenuResource( R.menu.map_menu )
@@ -87,7 +87,7 @@ class TodoMapActivity
   lazy val mapView = findView( TR.mapview )
   lazy val colorSpinner = findView( TR.color_spinner )
   lazy val listChooser = findView( TR.list_chooser )
-  lazy val listsAdapter = new TodosAdapter( this )
+  lazy val listsAdapter = new ShoppingListsAdapter( this )
 
   lazy val icons = TodoMaps.icons( this )
   var editingList: TodoList = null
@@ -113,7 +113,7 @@ class TodoMapActivity
     onOptionsItemSelected( R.id.edit ){ startEdit }
     onOptionsItemSelected( R.id.view ){ startViewing }
     onOptionsItemSelected( R.id.editlists ) {
-      startActivity( new Intent( this, classOf[ TodosActivity ]) )
+      startActivity( new Intent( this, classOf[ ShoppingListsActivity ]) )
     }
   }
 
@@ -164,13 +164,13 @@ class TodoMapActivity
       val list = listsAdapter.getItem( i ).asInstanceOf[ TodoList ]
       if (list.id != listToEdit.id) 
         mapView.getOverlays.add( 
-          new TodoEditBgOverlay( list, list.places.value,
+          new ShopEditBgOverlay( list, list.places.value,
                                  icons( list.iconIdx ).small ))
     }
 
     mapView.getOverlays.add( 
-      new EditPlacesOverlay( this, listToEdit, places, 
-                             icons( listToEdit.iconIdx ).large ))
+      new EditShopsOverlay( this, listToEdit, places, 
+                            icons( listToEdit.iconIdx ).large ))
     mapView.invalidate
   }
 
@@ -181,7 +181,7 @@ class TodoMapActivity
       val icon = if (list.numUndoneItems.value > 0) icons( list.iconIdx ).large
                  else icons( list.iconIdx ).small
       mapView.getOverlays.add( 
-        new TodoListPresentationOverlay( mapView, list, icon ))
+        new ShopPresentationOverlay( mapView, list, icon ))
     }
     mapView.invalidate
   }
@@ -214,7 +214,7 @@ object TodoMaps {
   }
 }
 
-class ListIconChoiceAdapter( activity: TodoMapActivity )
+class ListIconChoiceAdapter( activity: ShoppingMapActivity )
  extends IndexedSeqAdapter( TodoMaps.icons( activity ),
                             itemViewResourceId = R.layout.image_view )
 {

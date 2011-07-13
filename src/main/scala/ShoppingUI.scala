@@ -33,11 +33,11 @@ import android.graphics.Canvas
 // (MapActivities want to use this as well, so the constructor takes
 // any activity with our ActivityHelpers trait.)
 
-class TodosAdapter( activity: PositronicActivityHelpers )
+class ShoppingListsAdapter( activity: PositronicActivityHelpers )
  extends CursorSourceAdapter( activity, 
                               source = TodoLists.lists,
                               converter = TodoList.fromCursor(_),
-                              itemViewResourceId = R.layout.todos_row )
+                              itemViewResourceId = R.layout.shoppinglist_row )
  with SpinnerAdapter
 {
   def bindItem( view: View, list: TodoList ) =
@@ -46,7 +46,7 @@ class TodosAdapter( activity: PositronicActivityHelpers )
 
 // Activity that uses it:
 
-class TodosActivity 
+class ShoppingListsActivity 
  extends PositronicActivity( layoutResourceId = R.layout.all_todos ) 
  with ViewFinder 
 {
@@ -61,7 +61,7 @@ class TodosActivity
     // Wire listsView to the database
 
     useAppFacility( TodoDb )            // Open DB; arrange to close on destroy
-    listsView.setAdapter( new TodosAdapter( this ))
+    listsView.setAdapter( new ShoppingListsAdapter( this ))
 
     // Listen for events on widgets
 
@@ -72,7 +72,7 @@ class TodosActivity
 
     onOptionsItemSelected( R.id.undelete ) { doUndelete }
     onOptionsItemSelected( R.id.maps ) {
-      startActivity( new Intent( this, classOf[ TodoMapActivity ] ))
+      startActivity( new Intent( this, classOf[ ShoppingMapActivity ] ))
     }
 
     registerForContextMenu( listsView )
@@ -116,7 +116,7 @@ class TodosActivity
   }
 
   def viewListAt( posn: Int ) {
-    val intent = new Intent( this, classOf[TodoActivity] )
+    val intent = new Intent( this, classOf[ ShoppingListActivity ] )
     val theList = listsView.getAdapter.getItem( posn ).asInstanceOf[ TodoList ]
     TodoList.intoIntent( theList, intent )
     startActivity( intent )
@@ -148,8 +148,8 @@ class EditStringDialog( base: PositronicActivity )
 
 // And now, the other activity, which manages an individual todo list's items.
 
-class TodoActivity 
- extends PositronicActivity( layoutResourceId = R.layout.todo_one_list ) 
+class ShoppingListActivity 
+ extends PositronicActivity( layoutResourceId = R.layout.shopping_one_list ) 
  with ViewFinder 
 {
   var theList: TodoList = null
@@ -238,7 +238,7 @@ class TodoItemsAdapter( activity: PositronicActivity,
  extends CursorSourceAdapter( activity,
                               source = query,
                               converter = TodoItem.fromCursor(_),
-                              itemViewResourceId = R.layout.todo_row )
+                              itemViewResourceId = R.layout.item_row )
 {
   def bindItem( view: View, it: TodoItem ) =
     view.asInstanceOf[ TodoItemView ].setTodoItem( it )
