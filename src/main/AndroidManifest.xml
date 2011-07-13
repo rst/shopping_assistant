@@ -11,7 +11,7 @@
                 <category android:name="android.intent.category.LAUNCHER"></category>
             </intent-filter>
         </activity>
-        <activity android:label="One Todo List" android:name=".ShoppingListActivity"/>
+        <activity android:label="One Shopping List" android:name=".ShoppingListActivity"/>
         <activity android:label="@string/show_map" android:name=".ShoppingMapActivity"/>
         <uses-library android:name="com.google.android.maps"/>
     </application>

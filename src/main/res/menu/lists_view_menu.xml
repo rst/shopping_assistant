@@ -1,5 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-  android:name="Todo-list item operations">
+  android:name="Shopping list item operations">
   <item android:id="@+id/maps"
         android:title="Map View"/>
   <item android:id="@+id/undelete"

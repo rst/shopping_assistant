@@ -220,9 +220,9 @@ object ShoppingList {
   // Communicating these through intents...
   // Sadly, this is easier than making them serializable.
 
-  val intentIdKey   = "todoListId"; 
-  val intentNameKey = "todoListName"
-  val intentIconKey = "todoListIcon"
+  val intentIdKey   = "ShoppingListId"; 
+  val intentNameKey = "ShoppingListName"
+  val intentIconKey = "ShoppingListIcon"
 
   def intoIntent( list: ShoppingList, intent: Intent ) = {
     intent.putExtra( intentIdKey,   list.id )
@@ -271,6 +271,7 @@ object ShoppingLists extends ChangeManager( ShoppingDb )
     // Purge all previously deleted lists...
     for ( c <- dbListsAll.whereEq( "is_deleted" -> true ).select( "_id" )) {
       val purgedListId = c.getLong(0)
+      ShoppingDb("shops").whereEq("shopping_list_id"->purgedListId).delete
       ShoppingDb("shop_items").whereEq("shopping_list_id"->purgedListId).delete
       ShoppingDb("shopping_lists").whereEq( "_id" -> purgedListId ).delete
     }

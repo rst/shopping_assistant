@@ -47,7 +47,7 @@ class ShoppingListsAdapter( activity: PositronicActivityHelpers )
 // Activity that uses it:
 
 class ShoppingListsActivity 
- extends PositronicActivity( layoutResourceId = R.layout.all_todos ) 
+ extends PositronicActivity( layoutResourceId = R.layout.all_lists ) 
  with ViewFinder 
 {
   lazy val listsView = findView( TR.listsView )

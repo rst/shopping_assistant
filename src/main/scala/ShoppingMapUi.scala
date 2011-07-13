@@ -95,6 +95,8 @@ class ShoppingMapActivity
 
   onCreate { 
 
+    useAppFacility( ShoppingDb ) // Open DB; arrange to close on destroy
+
     setContentView( R.layout.map ) 
     findView( TR.mapview ).setBuiltInZoomControls( true )
     startViewing
