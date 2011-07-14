@@ -21,64 +21,6 @@ import android.widget.Toast
 import android.widget.ImageView
 import android.util.Log
 
-// Overlay for just viewing a list
-
-class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable ) 
-  extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
-{
-  val defaultDescription = "A " + list.name
-
-  val items:  IndexedSeq[OverlayItem] = 
-    for ( place <- list.places.value )
-    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
-                           defaultDescription, null )
-
-  def size = items.size
-  def createItem( i: Int ):OverlayItem = items( i )
-
-  populate
-}
-
-// Overlays for edit
-
-class ShopEditBgOverlay( list: ShoppingList, 
-                         places: IndexedSeq[ Shop ],
-                         d: Drawable )
-  extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
-{
-  val defaultDescription = "A " + list.name
-
-  val items:  IndexedSeq[OverlayItem] = 
-    for ( place <- places )
-    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
-                           defaultDescription, null )
-
-  def size = items.size
-  def createItem( i: Int ):OverlayItem = items( i )
-
-  populate
-}
-
-class EditShopsOverlay( activity: ShoppingMapActivity, 
-                        list: ShoppingList, 
-                        places: IndexedSeq[ Shop ],
-                        d: Drawable )
-  extends ShopEditBgOverlay( list, places, d )
-{
-  override def onTap( i: Int ): Boolean = {
-    list.deletePlace( places( i ) )
-    return true
-  }
-}
-
-// Overlay to soak up unclaimed taps on the map.
-
-class NoteTapOverlay( activity: ShoppingMapActivity )
-  extends Overlay
-{
-  override def onTap( pt: GeoPoint, mv: MapView ) = activity.unclaimedTap( pt )
-}
-
 class ShoppingMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
 {
@@ -223,5 +165,64 @@ class ListIconChoiceAdapter( activity: ShoppingMapActivity )
   override def bindView( view: View, iconSet: ShoppingMaps.IconSet ) =
     view.asInstanceOf[ ImageView ].setImageDrawable( iconSet.large )
 }
-                            
+
+// Map Overlays.  Mostly ItemizedOverlay variants, except NoteTapOverlay.
+//
+// Overlay for just viewing a list
+
+class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable ) 
+  extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
+{
+  val defaultDescription = "A " + list.name
+
+  val items:  IndexedSeq[OverlayItem] = 
+    for ( place <- list.places.value )
+    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
+                           defaultDescription, null )
+
+  def size = items.size
+  def createItem( i: Int ):OverlayItem = items( i )
+
+  populate
+}
+
+// Overlays for edit
+
+class ShopEditBgOverlay( list: ShoppingList, 
+                         places: IndexedSeq[ Shop ],
+                         d: Drawable )
+  extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
+{
+  val defaultDescription = "A " + list.name
+
+  val items:  IndexedSeq[OverlayItem] = 
+    for ( place <- places )
+    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
+                           defaultDescription, null )
+
+  def size = items.size
+  def createItem( i: Int ):OverlayItem = items( i )
+
+  populate
+}
+
+class EditShopsOverlay( activity: ShoppingMapActivity, 
+                        list: ShoppingList, 
+                        places: IndexedSeq[ Shop ],
+                        d: Drawable )
+  extends ShopEditBgOverlay( list, places, d )
+{
+  override def onTap( i: Int ): Boolean = {
+    list.deletePlace( places( i ) )
+    return true
+  }
+}
+
+// Overlay to soak up unclaimed taps on the map.
+
+class NoteTapOverlay( activity: ShoppingMapActivity )
+  extends Overlay
+{
+  override def onTap( pt: GeoPoint, mv: MapView ) = activity.unclaimedTap( pt )
+}
 
