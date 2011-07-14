@@ -32,8 +32,11 @@ class ShoppingMapActivity
   lazy val listsAdapter = new ShoppingListsAdapter( this )
 
   lazy val icons = ShoppingMaps.icons( this )
+
   var editingList: ShoppingList = null
   var editingMode = false
+
+  // Basic UI wiring.
 
   onCreate { 
 
@@ -61,7 +64,11 @@ class ShoppingMapActivity
     }
   }
 
+  // Tell Google we're not using routes.
+
   def isRouteDisplayed = false
+
+  // UI commands.
 
   def startEdit = { 
 
@@ -130,12 +137,38 @@ class ShoppingMapActivity
     mapView.invalidate
   }
 
+  // Tap on the map.  If editing, we're adding a shop here.
+
   def unclaimedTap( pt: GeoPoint ): Boolean = {
     if (editingList == null)
       return false;
     editingList.addPlace( pt.getLatitudeE6, pt.getLongitudeE6 )
     return true
   }
+
+  // Persist state ... actually into shared prefs.
+
+  lazy val prefs = getPreferences( Context.MODE_PRIVATE )
+
+  override def saveInstanceState(b : Bundle) = {
+    val editor = prefs.edit
+    editor.putBoolean( "HavePosition", true )
+    editor.putInt( "LastLongitude", mapView.getMapCenter.getLongitudeE6 )
+    editor.putInt( "LastLatitude",  mapView.getMapCenter.getLatitudeE6 )
+    editor.putInt( "LastZoom", mapView.getZoomLevel )
+    editor.commit
+  }
+  
+  override def restoreInstanceState(b: Bundle) = {
+    if ( prefs.getBoolean( "HavePosition", false ) ) {
+      val controller = mapView.getController
+      val latitude  = prefs.getInt( "LastLatitude",  -1 )
+      val longitude = prefs.getInt( "LastLongitude", -1 )
+      controller.setCenter( new GeoPoint( latitude, longitude ))
+      controller.setZoom( prefs.getInt( "LastZoom", 0 ))
+    }
+  }
+
 }
 
 object ShoppingMaps {
