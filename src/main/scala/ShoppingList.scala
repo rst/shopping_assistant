@@ -84,12 +84,10 @@ object ShoppingDb
 case class ShopItem(var id: Long, var description: String, var isDone: Boolean)
 
 object ShopItem {
-
-  def doQuery( query: DbQuery )= query.select("_id", "description", "is_done")
-
-  def fromCursor( c: PositronicCursor ) = 
-    ShopItem( c.getLong( 0 ), c.getString( 1 ), c.getBoolean( 2 ))
-
+  def seqFromRows( query: DbQuery ) = 
+    query.select("_id", "description", "is_done").map {
+      c => ShopItem( c.getLong( 0 ), c.getString( 1 ), c.getBoolean( 2 ))
+    }
 }
 
 //================================================================
@@ -103,14 +101,11 @@ case class Shop( var id: Long, var description: String,
                       var latitude: Int, var longitude: Int )
 
 object Shop {
-
-  def doQuery( query: DbQuery ) = 
-    query.select("_id", "description", "latitude", "longitude")
-
-  def fromCursor( c: PositronicCursor ) =
-    Shop( c.getLong( 0 ), c.getString( 1 ), 
-               c.getInt( 2 ),  c.getInt( 3 ) )
-
+  def seqFromRows( query: DbQuery ) = 
+    query.select("_id", "description", "latitude", "longitude").map {
+      c => Shop( c.getLong( 0 ), c.getString( 1 ), 
+                 c.getInt( 2 ),  c.getInt( 3 ) )
+    }
 }
 
 //================================================================
@@ -129,11 +124,11 @@ case class ShoppingList( var id: Long, var name: String, var iconIdx: Int )
 
   // Things that UI elements (etc.) can monitor
 
-  lazy val items = cursorStream { ShopItem.doQuery( dbItems ) }
+  lazy val items = valueStream { ShopItem.seqFromRows( dbItems ) }
 
   def itemsQuery( initialShowDone: Boolean ) = {
-    cursorQuery( initialShowDone ){ showDone => 
-      ShopItem.doQuery(
+    valueQuery( initialShowDone ){ showDone => 
+      ShopItem.seqFromRows(
         if ( showDone ) dbItems else dbItems.whereEq( "is_done" -> false )
       )
     }
@@ -180,9 +175,7 @@ case class ShoppingList( var id: Long, var name: String, var iconIdx: Int )
   private lazy val dbShops = 
     dbShopsAll.whereEq( "is_deleted" -> false )
 
-  lazy val places = valueStream { 
-    Shop.doQuery( dbShops ).map{ Shop.fromCursor( _ ) }
-  }
+  lazy val places = valueStream { Shop.seqFromRows( dbShops ) }
   lazy val hasDeletedPlace = valueStream {
     dbShopsAll.whereEq( "is_deleted" -> true ).count > 0
   }
@@ -210,10 +203,10 @@ case class ShoppingList( var id: Long, var name: String, var iconIdx: Int )
 
 object ShoppingList {
 
-  def doQuery( query: DbQuery ) = query.select("_id", "name", "icon_idx")
-
-  def fromCursor( c: PositronicCursor ) = 
-    ShoppingList( c.getLong( 0 ), c.getString( 1 ), c.getInt( 2 ))
+  def seqFromRows( query: DbQuery ) = 
+    query.select("_id", "name", "icon_idx").map {
+      c => ShoppingList( c.getLong( 0 ), c.getString( 1 ), c.getInt( 2 ))
+    }
 
   def create( name: String ) = ShoppingDb("shopping_lists").insert("name"->name)
 
@@ -247,7 +240,7 @@ object ShoppingLists extends ChangeManager( ShoppingDb )
 
   // Things UI can monitor
 
-  lazy val lists = cursorStream { ShoppingList.doQuery( dbLists ) }
+  lazy val lists = valueStream { ShoppingList.seqFromRows( dbLists ) }
 
   lazy val numDeletedLists= valueStream {
     dbListsAll.whereEq("is_deleted"-> true).count

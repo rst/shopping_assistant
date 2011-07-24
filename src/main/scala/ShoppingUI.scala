@@ -4,7 +4,7 @@ import org.positronicnet.ui.IndexedSeqAdapter
 import org.positronicnet.ui.PositronicDialog
 import org.positronicnet.ui.PositronicActivity
 import org.positronicnet.ui.PositronicActivityHelpers
-import org.positronicnet.ui.CursorSourceAdapter
+import org.positronicnet.ui.IndexedSeqSourceAdapter
 
 import org.positronicnet.util.ChangeNotifications
 import org.positronicnet.content.PositronicCursor
@@ -34,13 +34,12 @@ import android.graphics.Canvas
 // any activity with our ActivityHelpers trait.)
 
 class ShoppingListsAdapter( activity: PositronicActivityHelpers )
- extends CursorSourceAdapter( activity, 
-                              source = ShoppingLists.lists,
-                              converter = ShoppingList.fromCursor(_),
-                              itemViewResourceId = R.layout.shoppinglist_row )
+ extends IndexedSeqSourceAdapter( activity, 
+                                  source = ShoppingLists.lists,
+                                  itemViewResourceId= R.layout.shoppinglist_row)
  with SpinnerAdapter
 {
-  def bindItem( view: View, list: ShoppingList ) =
+  override def bindView( view: View, list: ShoppingList ) =
     view.asInstanceOf[ TextView ].setText( list.name )
 }
 
@@ -234,13 +233,12 @@ class ShoppingListActivity
 }
 
 class ShopItemsAdapter( activity: PositronicActivity, 
-                        query: ChangeNotifications[PositronicCursor] )
- extends CursorSourceAdapter( activity,
-                              source = query,
-                              converter = ShopItem.fromCursor(_),
-                              itemViewResourceId = R.layout.item_row )
+                        query: ChangeNotifications[ IndexedSeq[ ShopItem ]] )
+ extends IndexedSeqSourceAdapter( activity,
+                                  source = query,
+                                  itemViewResourceId = R.layout.item_row )
 {
-  def bindItem( view: View, it: ShopItem ) =
+  override def bindView( view: View, it: ShopItem ) =
     view.asInstanceOf[ ShopItemView ].setShopItem( it )
 }
 
