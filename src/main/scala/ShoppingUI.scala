@@ -7,7 +7,7 @@ import org.positronicnet.ui.PositronicActivityHelpers
 import org.positronicnet.ui.CursorSourceAdapter
 
 import org.positronicnet.util.ChangeNotifications
-import org.positronicnet.db.PositronicCursor
+import org.positronicnet.content.PositronicCursor
 
 import android.app.Activity
 import android.os.Bundle

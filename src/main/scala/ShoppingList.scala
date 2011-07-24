@@ -4,8 +4,8 @@ import android.util.Log
 import android.content.Intent
 
 import org.positronicnet.db.Database
-import org.positronicnet.db.PositronicCursor
 import org.positronicnet.db.DbQuery
+import org.positronicnet.content.PositronicCursor
 
 import org.positronicnet.util.WorkerThread
 import org.positronicnet.util.ChangeManager
