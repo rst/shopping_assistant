@@ -210,7 +210,6 @@ class ListIconChoiceAdapter( activity: ShoppingMapActivity )
 
 class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable ) 
   extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
-  with HitDetection[ OverlayItem ]
 {
   val defaultDescription = "A " + list.name
 
@@ -231,7 +230,6 @@ class ShopEditBgOverlay( list: ShoppingList,
                          places: IndexedSeq[ Shop ],
                          d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
-  with HitDetection[ OverlayItem ]
 {
   val defaultDescription = "A " + list.name
 
@@ -251,6 +249,7 @@ class EditShopsOverlay( activity: ShoppingMapActivity,
                         places: IndexedSeq[ Shop ],
                         d: Drawable )
   extends ShopEditBgOverlay( list, places, d )
+  with DoubleTapDetection[ OverlayItem ]
 {
   override def onTap( i: Int ): Boolean = {
     list.deletePlace( places( i ) )

@@ -53,7 +53,7 @@ class DoubleTapMapView( context: Context, attrs: AttributeSet = null )
 
     while( it.hasNext ) {
       it.next match {
-        case ov: HitDetection[_] =>
+        case ov: DoubleTapDetection[_] =>
           if (ov.isItemAtPosn( x, y )) return
         case _ => null
       }
@@ -71,10 +71,10 @@ class DoubleTapMapView( context: Context, attrs: AttributeSet = null )
 // (I *think* --- the docs are less than explicit), so our shim
 // Java classes have been gimmicked to provide that.
 
-trait HitDetection[T <: OverlayItem] extends ItemizedOverlay[T] {
+trait DoubleTapDetection[T <: OverlayItem] extends ItemizedOverlay[T] {
 
   // Note the public variant of hitTest declared in our Java shim
-  // ItemizedOverlay classes.  (It can't be protected due to a Scala
+  // ItemizedOverlay class.  (It can't be protected due to a Scala
   // "implementation restriction"...)
 
   def hitTest( it: T, x: Int, y: Int ): Boolean
