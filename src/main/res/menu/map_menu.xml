@@ -1,9 +1,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   android:name="Shopping list map operations">
   <item android:id="@+id/edit"
-        android:title="Edit Places"/>
+        android:title="Edit Shop Locations"/>
   <item android:id="@+id/view"
-        android:title="End Place Edit"/>
+        android:title="End Location Edit"/>
   <item android:id="@+id/editlists"
         android:title="View Shopping Lists"/>
 </menu>

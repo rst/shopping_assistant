@@ -17,9 +17,19 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.view.View
+import android.view.Menu
 import android.widget.Toast
 import android.widget.ImageView
 import android.util.Log
+
+// Map-based portions of the Shopping-list UI:  adding shops
+// and seeing which ones have current items.
+//
+// A lot of the messiness here is because this activity is
+// really doing double duty, as *both* the "edit" and "view"
+// screens.  Which we do because we're forced; the Android
+// mapping toolkit only supports a single MapActivity per
+// process.
 
 class ShoppingMapActivity
   extends MapActivity with PositronicActivityHelpers with ViewFinder
@@ -62,6 +72,12 @@ class ShoppingMapActivity
     onOptionsItemSelected( R.id.editlists ) {
       startActivity( new Intent( this, classOf[ ShoppingListsActivity ]) )
     }
+  }
+
+  override def onPrepareOptionsMenu( menu: Menu ) = {
+    menu.findItem( R.id.edit ).setVisible( !editingMode )
+    menu.findItem( R.id.view ).setVisible(  editingMode )
+    true
   }
 
   // Tell Google we're not using routes.
@@ -147,14 +163,6 @@ class ShoppingMapActivity
     mapView.invalidate
   }
 
-  // Tap on the map.  If editing, we're adding a shop here.
-
-  def unclaimedTap( pt: GeoPoint ): Boolean = {
-    if (editingList == null)
-      return false;
-    return true
-  }
-
   // Persist state ... actually into shared prefs.
 
   lazy val prefs = getPreferences( Context.MODE_PRIVATE )
@@ -179,6 +187,8 @@ class ShoppingMapActivity
   }
 
 }
+
+// Various widgetry to deal with our available icons, and their display.
 
 object ShoppingMaps {
 
