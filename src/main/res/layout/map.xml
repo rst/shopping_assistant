@@ -23,7 +23,7 @@
       android:layout_width="wrap_content"
       android:layout_height="fill_parent"/>
   </LinearLayout>
-  <com.google.android.maps.MapView
+  <org.positronicnet.demo.shopping.DoubleTapMapView
     android:id="@+id/mapview"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"

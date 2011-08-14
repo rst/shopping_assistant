@@ -15,6 +15,7 @@ abstract public class PositronicBalloonItemizedOverlay< T extends OverlayItem>
 {
   public static final int MARKER_CENTERED = 0;
   public static final int MARKER_CENTERED_ABOVE = 1;
+  protected final Drawable itemDrawable;
 
   private static Drawable placeMarker( Drawable d, int how ) {
     switch( how ) {
@@ -26,5 +27,12 @@ abstract public class PositronicBalloonItemizedOverlay< T extends OverlayItem>
 
   public PositronicBalloonItemizedOverlay( MapView mapView, Drawable d, int markerPlacement ) {
     super( placeMarker( d, markerPlacement ), mapView );
+    itemDrawable = placeMarker( d, markerPlacement );
+  }
+
+  // Make hitTest public to work around a Scala "implementation restriction"
+
+  public boolean hitTest( T item, int x, int y ) {
+    return this.hitTest( item, itemDrawable, x, y );
   }
 }

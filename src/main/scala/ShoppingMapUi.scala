@@ -109,7 +109,6 @@ class ShoppingMapActivity
     // for the moment.
 
     mapView.getOverlays.clear
-    mapView.getOverlays.add( new NoteTapOverlay( this ))
 
     for (i <- Range( 0, listsAdapter.getCount )) {
       val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
@@ -122,6 +121,10 @@ class ShoppingMapActivity
     mapView.getOverlays.add( 
       new EditShopsOverlay( this, listToEdit, places, 
                             icons( listToEdit.iconIdx ).large ))
+
+    mapView.onDoubleTap{ pt =>
+      editingList.addPlace( pt.getLatitudeE6, pt.getLongitudeE6 ) }
+    
     mapView.invalidate
   }
 
@@ -134,6 +137,9 @@ class ShoppingMapActivity
       mapView.getOverlays.add( 
         new ShopPresentationOverlay( mapView, list, icon ))
     }
+
+    mapView.onDoubleTap{ pt => null }
+
     mapView.invalidate
   }
 
@@ -142,7 +148,6 @@ class ShoppingMapActivity
   def unclaimedTap( pt: GeoPoint ): Boolean = {
     if (editingList == null)
       return false;
-    editingList.addPlace( pt.getLatitudeE6, pt.getLongitudeE6 )
     return true
   }
 
@@ -199,12 +204,13 @@ class ListIconChoiceAdapter( activity: ShoppingMapActivity )
     view.asInstanceOf[ ImageView ].setImageDrawable( iconSet.large )
 }
 
-// Map Overlays.  Mostly ItemizedOverlay variants, except NoteTapOverlay.
-//
+// Map Overlays.  
+
 // Overlay for just viewing a list
 
 class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable ) 
   extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
+  with HitDetection[ OverlayItem ]
 {
   val defaultDescription = "A " + list.name
 
@@ -225,6 +231,7 @@ class ShopEditBgOverlay( list: ShoppingList,
                          places: IndexedSeq[ Shop ],
                          d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
+  with HitDetection[ OverlayItem ]
 {
   val defaultDescription = "A " + list.name
 
@@ -251,11 +258,4 @@ class EditShopsOverlay( activity: ShoppingMapActivity,
   }
 }
 
-// Overlay to soak up unclaimed taps on the map.
-
-class NoteTapOverlay( activity: ShoppingMapActivity )
-  extends Overlay
-{
-  override def onTap( pt: GeoPoint, mv: MapView ) = activity.unclaimedTap( pt )
-}
 
