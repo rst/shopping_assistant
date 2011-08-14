@@ -36,7 +36,7 @@ class DoubleTapMapView( context: Context, attrs: AttributeSet = null )
       return super.onTouchEvent( ev )
   }
 
-  def onDoubleTap( handler: GeoPoint => Unit ):Unit =
+  def onFreeDoubleTap( handler: GeoPoint => Unit ):Unit =
     doubleTapHandler = handler
 
   private def dispatchDoubleTap( ev: MotionEvent ): Unit = {
@@ -54,8 +54,11 @@ class DoubleTapMapView( context: Context, attrs: AttributeSet = null )
     while( it.hasNext ) {
       it.next match {
         case ov: DoubleTapDetection[_] =>
-          if (ov.isItemAtPosn( x, y )) return
-        case _ => null
+          ov.findIndexAtPosn( this, x, y ) match {
+            case Some( idx ) => ov.onDoubleTap( idx ); return
+            case None => // nothing
+          }
+        case _ => // nothing
       }
     }
 
@@ -75,16 +78,28 @@ trait DoubleTapDetection[T <: OverlayItem] extends ItemizedOverlay[T] {
 
   // Note the public variant of hitTest declared in our Java shim
   // ItemizedOverlay class.  (It can't be protected due to a Scala
-  // "implementation restriction"...)
+  // "implementation restriction"...).
+  //
+  // Also note the odd coordinate gymnastics needed to actually use
+  // hitTest.  The documentation here leaves a great deal to be desired;
+  // this code is cargo-culted out of an email thread here:
+  //
+  // http://groups.google.com/group/android-developers/browse_thread/thread/b4484fbc1ec00c1d
 
   def hitTest( it: T, x: Int, y: Int ): Boolean
 
-  private def findIndexAtPosn( x: Int, y: Int ) =
-    Range( 0, size ).find{ idx => hitTest( getItem( idx ), x, y )}
+  def findIndexAtPosn( mapView: MapView, x: Int, y: Int ) = {
+    Range( 0, size ).find{ idx => 
+      val item = getItem( idx )
+      val pt = mapView.getProjection.toPixels( item.getPoint, null )
+      hitTest( item, x - pt.x, y - pt.y )
+    }
+  }
 
-  def findItemAtPosn( x: Int, y: Int ) =
-    findIndexAtPosn( x, y ).map{ getItem(_) }
+  var doubleTapHandler: (Int => Unit) = null
 
-  def isItemAtPosn( x: Int, y: Int ) = 
-    findIndexAtPosn( x, y ) != None
+  def onDoubleTap( func: Int => Unit ) = { doubleTapHandler = func }
+
+  def onDoubleTap( idx: Int ):Unit = 
+    if (doubleTapHandler != null) doubleTapHandler( idx )
 }

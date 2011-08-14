@@ -114,17 +114,21 @@ class ShoppingMapActivity
       val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
       if (list.id != listToEdit.id) 
         mapView.getOverlays.add( 
-          new ShopEditBgOverlay( list, list.places.value,
-                                 icons( list.iconIdx ).small ))
+          new EditShopsBgOverlay( list, list.places.value,
+                                  icons( list.iconIdx ).small ))
     }
 
-    mapView.getOverlays.add( 
-      new EditShopsOverlay( this, listToEdit, places, 
-                            icons( listToEdit.iconIdx ).large ))
+    val editOverlay = 
+      new EditShopsOverlay( listToEdit, places, 
+                            icons( listToEdit.iconIdx ).large )
 
-    mapView.onDoubleTap{ pt =>
+    mapView.getOverlays.add( editOverlay )
+
+    mapView.onFreeDoubleTap{ pt =>
       editingList.addPlace( pt.getLatitudeE6, pt.getLongitudeE6 ) }
-    
+
+    editOverlay.onDoubleTap{ idx => listToEdit.deletePlace( places( idx ) ) }
+
     mapView.invalidate
   }
 
@@ -138,7 +142,7 @@ class ShoppingMapActivity
         new ShopPresentationOverlay( mapView, list, icon ))
     }
 
-    mapView.onDoubleTap{ pt => null }
+    mapView.onFreeDoubleTap{ pt => null }
 
     mapView.invalidate
   }
@@ -226,9 +230,9 @@ class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable )
 
 // Overlays for edit
 
-class ShopEditBgOverlay( list: ShoppingList, 
-                         places: IndexedSeq[ Shop ],
-                         d: Drawable )
+class EditShopsBgOverlay( list: ShoppingList, 
+                          places: IndexedSeq[ Shop ],
+                          d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   val defaultDescription = "A " + list.name
@@ -244,17 +248,9 @@ class ShopEditBgOverlay( list: ShoppingList,
   populate
 }
 
-class EditShopsOverlay( activity: ShoppingMapActivity, 
-                        list: ShoppingList, 
+class EditShopsOverlay( list: ShoppingList, 
                         places: IndexedSeq[ Shop ],
                         d: Drawable )
-  extends ShopEditBgOverlay( list, places, d )
+  extends EditShopsBgOverlay( list, places, d )
   with DoubleTapDetection[ OverlayItem ]
-{
-  override def onTap( i: Int ): Boolean = {
-    list.deletePlace( places( i ) )
-    return true
-  }
-}
-
 
