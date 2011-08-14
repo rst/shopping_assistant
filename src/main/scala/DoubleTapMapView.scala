@@ -41,11 +41,8 @@ class DoubleTapMapView( context: Context, attrs: AttributeSet = null )
 
   private def dispatchDoubleTap( ev: MotionEvent ): Unit = {
 
-    // If this double tap is at a point near the items for any of our
-    // itemizedOverlays, that overlay's onTap has probably already
-    // handled it.  And in any case, there's an item there, which means
-    // that our intended double-tap handling --- adding another item
-    // --- is probably not what we want here anyway.  So, suppress it.
+    // Dispatch a double tap to layers with an interest, or
+    // our "free double tap handler", as appropriate.
     
     val x  = ev.getX.intValue   // Don't need sub-pixel precision here
     val y  = ev.getY.intValue
