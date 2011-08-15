@@ -192,12 +192,25 @@ case class ShoppingList( var id: Long, var name: String, var iconIdx: Int )
   }
 
   def deletePlace( place: Shop ) = doChange {
+    ProxAlertManagement.deleteProxAlert( this, place )
     dbShopsAll.whereEq( "is_deleted" -> true ).delete
     dbShopsAll.whereEq( "_id" -> place.id ).update( "is_deleted" -> true )
   }
 
   def undeletePlace = doChange {
     dbShopsAll.update( "is_deleted" -> false )
+  }
+
+  // And prox alert updates.  Maximum crudeness:  we clobber all prox alerts
+  // for the list on any change whatever.  What's tricky about doing better
+  // here is that with stuff written as above, "the shop that changed" is
+  // not available as an object until after it's read out of the DB.
+  // Hopefully, with an ORM, we can do better...
+  //
+  // At least this is happening on a background thread!
+
+  val forceProxAlertUpdates = valueStream{
+    ProxAlertManagement.resetAllProxAlerts( this )
   }
 }
 

@@ -60,6 +60,7 @@ class ShoppingListsActivity
     // Wire listsView to the database
 
     useAppFacility( ShoppingDb ) // Open DB; arrange to close on destroy
+    useAppFacility( ProxAlertManagement )
     listsView.setAdapter( new ShoppingListsAdapter( this ))
 
     // Listen for events on widgets
@@ -169,6 +170,7 @@ class ShoppingListActivity
     setTitle( "Todo for: " + theList.name )
 
     useAppFacility( ShoppingDb )
+    useAppFacility( ProxAlertManagement )
     listItemsView.setAdapter( new ShopItemsAdapter( this, listItemsQuery ) )
 
     // Event handlers...
