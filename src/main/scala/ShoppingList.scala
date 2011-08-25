@@ -8,7 +8,7 @@ import org.positronicnet.db.DbQuery
 import org.positronicnet.content.PositronicCursor
 
 import org.positronicnet.util.WorkerThread
-import org.positronicnet.util.ChangeManager
+import org.positronicnet.util.BaseNotificationManager
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -113,7 +113,7 @@ object Shop {
 // Includes most actual manipulation of items and shops.
 
 case class ShoppingList( var id: Long, var name: String, var iconIdx: Int )
- extends ChangeManager( ShoppingDb )
+ extends BaseNotificationManager( ShoppingDb )
 {
   // Setting up (and use of) prebaked query fragments.
 
@@ -246,7 +246,7 @@ object ShoppingList {
 //================================================================
 // Singleton object to represent the set of all available lists.
 
-object ShoppingLists extends ChangeManager( ShoppingDb )
+object ShoppingLists extends BaseNotificationManager( ShoppingDb )
 {
   private lazy val dbListsAll = ShoppingDb("shopping_lists")
   private lazy val dbLists = dbListsAll.whereEq("is_deleted"-> false)

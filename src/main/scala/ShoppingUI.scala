@@ -6,8 +6,8 @@ import org.positronicnet.ui.PositronicActivity
 import org.positronicnet.ui.PositronicActivityHelpers
 import org.positronicnet.ui.IndexedSeqSourceAdapter
 
-import org.positronicnet.util.ChangeNotifications
 import org.positronicnet.content.PositronicCursor
+import org.positronicnet.util.Notifier
 
 import android.app.Activity
 import android.os.Bundle
@@ -235,7 +235,7 @@ class ShoppingListActivity
 }
 
 class ShopItemsAdapter( activity: PositronicActivity, 
-                        query: ChangeNotifications[ IndexedSeq[ ShopItem ]] )
+                        query: Notifier[ IndexedSeq[ ShopItem ]] )
  extends IndexedSeqSourceAdapter( activity,
                                   source = query,
                                   itemViewResourceId = R.layout.item_row )
