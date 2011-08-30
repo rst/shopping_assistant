@@ -11,6 +11,10 @@ import org.positronicnet.maps.PositronicBalloonItemizedOverlay
 import org.positronicnet.ui.PositronicActivityHelpers
 import org.positronicnet.ui.IndexedSeqAdapter
 
+import org.positronicnet.util._
+import org.positronicnet.orm._
+import org.positronicnet.orm.Actions._
+
 import android.os.Bundle
 import android.graphics.drawable.Drawable
 import android.app.AlertDialog
@@ -20,6 +24,7 @@ import android.view.View
 import android.view.Menu
 import android.widget.Toast
 import android.widget.ImageView
+import android.widget.SpinnerAdapter
 import android.util.Log
 
 // Map-based portions of the Shopping-list UI:  adding shops
@@ -43,9 +48,6 @@ class ShoppingMapActivity
 
   lazy val icons = ShoppingMaps.icons( this )
 
-  var editingList: ShoppingList = null
-  var editingMode = false
-
   // Basic UI wiring.
 
   onCreate { 
@@ -61,12 +63,7 @@ class ShoppingMapActivity
     listChooser.onItemSelected{ (view, posn, id) => editSelectedList }
 
     colorSpinner.setAdapter( new ListIconChoiceAdapter( this ) )
-    colorSpinner.onItemSelected{ (view, posn, id) => 
-      if (editingList != null) {
-        ShoppingLists.setListIconIdx( editingList, posn )
-        setOverlaysForEdit( editingList, editingList.places.value )
-      }
-    }
+    colorSpinner.onItemSelected{ (view, posn, id) => iconSelected( posn ) }
 
     onOptionsItemSelected( R.id.edit ){ startEdit }
     onOptionsItemSelected( R.id.view ){ startViewing }
@@ -81,30 +78,75 @@ class ShoppingMapActivity
     true
   }
 
-  // Tell Google we're not using routes.
+  // Handling "view mode"
 
-  def isRouteDisplayed = false
+  def startViewing = {
 
-  // UI commands.
+    setTitle( R.string.show_map )
+
+    endEdit                             // if we had one in progress
+    setOverlaysForViews
+  }
+
+  def setOverlaysForViews = {
+    mapView.getOverlays.clear
+    for (i <- Range( 0, listsAdapter.getCount )) {
+      val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
+
+      list.undoneItems.count ! Fetch{ numUndone => {
+
+        val icon = if (numUndone > 0) icons( list.iconIdx ).large
+                   else icons( list.iconIdx ).small
+
+        if (!editingMode) {             // paranoia about race conditions
+          mapView.getOverlays.add( 
+            new ShopPresentationOverlay( mapView, list, icon ))
+        }
+      }}
+    }
+  }
+
+  // Edit-mode and state maintenance for it.
+
+  var editingMode = false
+  var editingList: ShoppingList = null
+  var editOverlay: EditShopsOverlay = null
 
   def startEdit = { 
-
     findView( TR.edit_controls ).setVisibility( View.VISIBLE )
     setTitle( R.string.edit_map )
 
     editingMode = true
     editingList = null                  // force redisplay
     editSelectedList 
+
+    mapView.onFreeDoubleTap{ pt =>
+      val shop = editingList.shops.create.setLocation( pt.getLatitudeE6,
+                                                       pt.getLongitudeE6 )
+      editingList.shops ! Save( shop )
+    }
+
+    // Double-tap on a shop handled in the overlay itself.
   }
 
-  def startViewing = {
+  def endEdit = 
+    if (editingMode) {
+      if (editOverlay != null) editOverlay.stopEdit
+      editingMode = false
+      editingList = null
+      editOverlay = null
+      findView( TR.edit_controls ).setVisibility( View.GONE )
+      mapView.onFreeDoubleTap{ pt => null }
+    }
 
-    findView( TR.edit_controls ).setVisibility( View.GONE )
-    setTitle( R.string.show_map )
+  onDestroy{ endEdit }
 
-    editingMode = false
-    setOverlaysForViews
-  }
+  def iconSelected( iconIdx: Int ) = 
+    if (editingList != null) {
+      editingList = editingList.setIconIdx( iconIdx )
+      ShoppingLists ! Save( editingList )
+      setOverlaysForEdit( editingList )
+    }
 
   def editSelectedList = {
     if (editingMode) {
@@ -112,18 +154,12 @@ class ShoppingMapActivity
       if (editingList != list && editingMode) {
         editingList = list
         colorSpinner.setSelection( list.iconIdx, false )
-        onChangeTo( list.places ) { places =>
-          this.runOnUiThread{ setOverlaysForEdit( list, places )}}
+        setOverlaysForEdit( list )
       }
     }
   }
 
-  def setOverlaysForEdit( listToEdit: ShoppingList, 
-                          places: IndexedSeq[ Shop ] ):Unit = 
-  {
-    // Adding or removing overlay items from a preexisting ItemizedOverlay
-    // can get really fussy.  So, we just clear 'em out and redo from scratch,
-    // for the moment.
+  def setOverlaysForEdit( listToEdit: ShoppingList ):Unit =  {
 
     mapView.getOverlays.clear
 
@@ -131,40 +167,17 @@ class ShoppingMapActivity
       val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
       if (list.id != listToEdit.id) 
         mapView.getOverlays.add( 
-          new EditShopsBgOverlay( list, list.places.value,
-                                  icons( list.iconIdx ).small ))
+          new EditShopsBgOverlay( mapView, list, icons( list.iconIdx ).small ))
     }
 
-    val editOverlay = 
-      new EditShopsOverlay( listToEdit, places, 
+    editOverlay = 
+      new EditShopsOverlay( mapView, listToEdit, 
                             icons( listToEdit.iconIdx ).large )
 
     mapView.getOverlays.add( editOverlay )
-
-    mapView.onFreeDoubleTap{ pt =>
-      editingList.addPlace( pt.getLatitudeE6, pt.getLongitudeE6 ) }
-
-    editOverlay.onDoubleTap{ idx => listToEdit.deletePlace( places( idx ) ) }
-
-    mapView.invalidate
   }
 
-  def setOverlaysForViews = {
-    mapView.getOverlays.clear
-    for (i <- Range( 0, listsAdapter.getCount )) {
-      val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
-      val icon = if (list.numUndoneItems.value > 0) icons( list.iconIdx ).large
-                 else icons( list.iconIdx ).small
-      mapView.getOverlays.add( 
-        new ShopPresentationOverlay( mapView, list, icon ))
-    }
-
-    mapView.onFreeDoubleTap{ pt => null }
-
-    mapView.invalidate
-  }
-
-  // Persist state ... actually into shared prefs.
+  // Persist last-viewed-position state ... actually into shared prefs.
 
   lazy val prefs = getPreferences( Context.MODE_PRIVATE )
 
@@ -187,6 +200,9 @@ class ShoppingMapActivity
     }
   }
 
+  // Tell Google we're not using routes.
+
+  def isRouteDisplayed = false
 }
 
 // Various widgetry to deal with our available icons, and their display.
@@ -212,8 +228,9 @@ object ShoppingMaps {
 }
 
 class ListIconChoiceAdapter( activity: ShoppingMapActivity )
- extends IndexedSeqAdapter( ShoppingMaps.icons( activity ),
-                            itemViewResourceId = R.layout.image_view )
+  extends IndexedSeqAdapter( ShoppingMaps.icons( activity ),
+                             itemViewResourceId = R.layout.image_view )
+  with SpinnerAdapter
 {
   override def bindView( view: View, iconSet: ShoppingMaps.IconSet ) =
     view.asInstanceOf[ ImageView ].setImageDrawable( iconSet.large )
@@ -228,40 +245,51 @@ class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable )
 {
   val defaultDescription = "A " + list.name
 
-  val items:  IndexedSeq[OverlayItem] = 
-    for ( place <- list.places.value )
-    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
-                           defaultDescription, null )
+  var items:  IndexedSeq[OverlayItem] = IndexedSeq.empty
 
   def size = items.size
   def createItem( i: Int ):OverlayItem = items( i )
 
-  populate
+  list.shops ! Fetch{ shops =>
+    items = shops.map{ shop =>
+      new OverlayItem( new GeoPoint( shop.latitude, shop.longitude ),
+                       defaultDescription, null ) }
+    setLastFocusedIndex( -1 )           // so we don't die if the list shrank
+    populate
+    map.invalidate
+  }
 }
 
 // Overlays for edit
 
-class EditShopsBgOverlay( list: ShoppingList, 
-                          places: IndexedSeq[ Shop ],
-                          d: Drawable )
+class EditShopsBgOverlay( map: MapView, list: ShoppingList, d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   val defaultDescription = "A " + list.name
+  var shops: IndexedSeq[Shop] = IndexedSeq.empty
 
-  val items:  IndexedSeq[OverlayItem] = 
-    for ( place <- places )
-    yield new OverlayItem( new GeoPoint( place.latitude, place.longitude ),
-                           defaultDescription, null )
+  def size = shops.size
+  def createItem( i: Int ):OverlayItem = 
+    new OverlayItem( new GeoPoint( shops(i).latitude, shops(i).longitude ),
+                     defaultDescription, null )
 
-  def size = items.size
-  def createItem( i: Int ):OverlayItem = items( i )
+  list.shops ! Fetch{ shops => resetOverlay( shops ) }
 
-  populate
+  def resetOverlay( newShops: IndexedSeq[ Shop ] ) = {
+    shops = newShops
+    setLastFocusedIndex( -1 )           // so we don't die if the list shrank
+    populate
+    map.invalidate
+  }
 }
 
-class EditShopsOverlay( list: ShoppingList, 
-                        places: IndexedSeq[ Shop ],
-                        d: Drawable )
-  extends EditShopsBgOverlay( list, places, d )
+class EditShopsOverlay( map: MapView, list: ShoppingList, d: Drawable )
+  extends EditShopsBgOverlay( map, list, d )
   with DoubleTapDetection[ OverlayItem ]
+{
+  list.shops ! AddWatcher( this, resetOverlay( _ ) )
 
+  def stopEdit = list.shops ! StopWatching( this )
+
+  onDoubleTap{ idx => list.shops ! Delete( shops( idx ) ) }
+}

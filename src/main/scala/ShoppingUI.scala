@@ -9,6 +9,10 @@ import org.positronicnet.ui.IndexedSeqSourceAdapter
 import org.positronicnet.content.PositronicCursor
 import org.positronicnet.util.Notifier
 
+import org.positronicnet.util._
+import org.positronicnet.orm._
+import org.positronicnet.orm.Actions._
+
 import android.app.Activity
 import android.os.Bundle
 import android.content.Context
@@ -34,10 +38,10 @@ import android.graphics.Canvas
 // any activity with our ActivityHelpers trait.)
 
 class ShoppingListsAdapter( activity: PositronicActivityHelpers )
- extends IndexedSeqSourceAdapter( activity, 
-                                  source = ShoppingLists.lists,
-                                  itemViewResourceId= R.layout.shoppinglist_row)
- with SpinnerAdapter
+  extends IndexedSeqSourceAdapter( activity, 
+                                   source = ShoppingLists.records,
+                                   itemViewResourceId=R.layout.shoppinglist_row)
+  with SpinnerAdapter
 {
   override def bindView( view: View, list: ShoppingList ) =
     view.asInstanceOf[ TextView ].setText( list.name )
@@ -46,8 +50,8 @@ class ShoppingListsAdapter( activity: PositronicActivityHelpers )
 // Activity that uses it:
 
 class ShoppingListsActivity 
- extends PositronicActivity( layoutResourceId = R.layout.all_lists ) 
- with ViewFinder 
+  extends PositronicActivity( layoutResourceId = R.layout.all_lists ) 
+  with ViewFinder 
 {
   lazy val listsView = findView( TR.listsView )
   lazy val renameDialog = new EditStringDialog( this )
@@ -95,30 +99,34 @@ class ShoppingListsActivity
   def doAdd = {
     val str = findView( TR.newListName ).getText.toString
     if ( str != "" ) {
-      ShoppingLists.addList( name = str )
+      ShoppingLists ! Save( ShoppingList( name = str ))
       findView( TR.newListName ).setText("")
     }
   }
 
   def doRename( list: ShoppingList ) =
     renameDialog.doEdit( list.name ){ 
-      ShoppingLists.setListName( list, _ )
+      newName => ShoppingLists ! Save( list.setName( newName ))
     }
 
   def doDelete( list: ShoppingList ) = {
-    ShoppingLists.removeList( list )
+    ShoppingLists ! Delete( list )
     toast( R.string.list_deleted, Toast.LENGTH_LONG )
   }
 
   def doUndelete = { 
-    if (ShoppingLists.numDeletedLists.value > 0) ShoppingLists.undelete
-    else toast( R.string.undeletes_exhausted )
+    ShoppingLists.hasDeleted ! Fetch{ hasDeleted => {
+      if ( hasDeleted ) 
+        ShoppingLists ! Undelete( ShoppingList() )
+      else 
+        toast( R.string.undeletes_exhausted )
+    }}
   }
 
   def viewListAt( posn: Int ) {
     val intent = new Intent( this, classOf[ ShoppingListActivity ] )
     val theList = listsView.getAdapter.getItem(posn).asInstanceOf[ShoppingList]
-    ShoppingList.intoIntent( theList, intent )
+    intent.putExtra( "shopping_list_id", theList.id )
     startActivity( intent )
   }
 }
@@ -149,13 +157,12 @@ class EditStringDialog( base: PositronicActivity )
 // The activity which manages an individual shopping list's items.
 
 class ShoppingListActivity 
- extends PositronicActivity( layoutResourceId = R.layout.shopping_one_list ) 
- with ViewFinder 
+  extends PositronicActivity( layoutResourceId = R.layout.shopping_one_list ) 
+  with ViewFinder 
 {
   var theList: ShoppingList = null
 
   lazy val newItemText = findView( TR.newItemText )
-  lazy val listItemsQuery = theList.itemsQuery( initialShowDone = true )
   lazy val listItemsView = findView( TR.listItemsView )
   lazy val editDialog = new EditStringDialog( this )
 
@@ -166,12 +173,17 @@ class ShoppingListActivity
 
     // Setup --- get list out of our Intent, and hook up the listItemsView
 
-    theList = ShoppingList.fromIntent( getIntent )
-    setTitle( "Todo for: " + theList.name )
-
     useAppFacility( ShoppingDb )
     useAppFacility( ProxAlertManagement )
-    listItemsView.setAdapter( new ShopItemsAdapter( this, listItemsQuery ) )
+
+    val listId = getIntent.getLongExtra( "shopping_list_id", -1 )
+
+    ShoppingLists ! Find( listId, list => {
+      theList = list
+      setTitle( "Todo for: " + theList.name )
+      listItemsView.setAdapter( new ShopItemsAdapter( this, 
+                                                      theList.items.records ))
+    })
 
     // Event handlers...
 
@@ -207,30 +219,36 @@ class ShoppingListActivity
   def doAdd = {
     val str = newItemText.getText.toString
     if ( str != "" ) {
-      theList.addItem( description = str, isDone = false )
+      theList.items ! Save( theList.items.create.setDescription( str ))
       newItemText.setText("")
     }
   }
 
   def doEdit( it: ShopItem ) = 
-    editDialog.doEdit( it.description ) {
-       theList.setItemDescription( it, _ )
+    editDialog.doEdit( it.description ) { newDesc =>
+      theList.items ! Save( it.setDescription( newDesc ))
     }
 
-  def toggleDone( it: ShopItem ) = theList.setItemDone( it, !it.isDone )
+  def toggleDone( it: ShopItem ) = 
+    theList.items ! Save( it.setDone( !it.isDone ))
 
   def deleteWhereDone = {
-    if (theList.numDoneItems.value > 0) 
-      theList.deleteWhereDone
-    else
-      toast( R.string.no_tasks_done )
+    theList.doneItems.count ! Fetch { 
+      numDone =>
+        if (numDone > 0)
+          theList.doneItems ! DeleteAll
+        else
+          toast( R.string.no_tasks_done )
+    }
   }
 
   def undelete = {
-    if (theList.numDeletedItems.value > 0)
-      theList.undeleteItems
-    else
-      toast( R.string.undeletes_exhausted )
+    theList.items.hasDeleted ! Fetch{ hasDeleted => {
+      if ( hasDeleted )
+        theList.items ! Undelete( ShopItem() )
+      else
+        toast( R.string.undeletes_exhausted )
+    }}
   }
 }
 

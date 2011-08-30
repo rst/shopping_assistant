@@ -11,7 +11,7 @@ import android.app.PendingIntent
 import android.location.LocationManager
 import android.util.Log
 
-// All prox alert handling wrapped up in the ProxAlertManagement trait
+// All prox alert handling wrapped up in the ProxAlertManagement class
 // and companion object (an AppFacility which sets up the alerts),
 // which between them know the structure of the intents we're
 // sending...
@@ -19,16 +19,23 @@ import android.util.Log
 object ProxAlertManagement 
   extends org.positronicnet.util.AppFacility
 {
-  val shopIdKey   = "shop_id"
+  val shopIdKey = "shop_id"
+  val listIdKey = "list_id"
+
   val alertRadiusMeters = 300           // Should be a pref...
 
   private var locManager: LocationManager = null
   private var ctx:        Context         = null
 
   override def realOpen( ctx: Context ) = {
-    this.ctx = ctx
+    this.ctx = ctx.getApplicationContext
     locManager = ctx.getSystemService( Context.LOCATION_SERVICE )
       .asInstanceOf[ LocationManager ]
+  }
+
+  override def realClose = {
+    this.ctx = null
+    this.locManager = null
   }
 
   // NB we set a prox alert for each shop, sticking the shop ID in the
@@ -36,17 +43,14 @@ object ProxAlertManagement
   // canceling each other out.  
 
   def resetAllProxAlerts: Unit =
-    for ( list <- ShoppingLists.lists.value )
-      resetAllProxAlerts( list )
+    for ( list <- ShoppingLists.fetchOnThisThread;
+          shop <- list.shops.fetchOnThisThread )
+      resetProxAlert( shop, list )
 
-  def resetAllProxAlerts( list: ShoppingList ) =
-    for ( shop <- list.places.value )
-      resetProxAlert( list, shop )
+  def resetProxAlert( shop: Shop ): Unit =
+    resetProxAlert( shop, shop.shoppingList.fetchOnThisThread )
 
-  def deleteProxAlert( list: ShoppingList, shop: Shop ): Unit =
-    locManager.removeProximityAlert( buildPendingIntent( list, shop ))
-
-  def resetProxAlert( list: ShoppingList, shop: Shop ): Unit = {
+  def resetProxAlert( shop: Shop, list: ShoppingList ): Unit = {
     Log.d( "XXX", "adding prox alert for shop " + shop.id + " at lat " +
           (shop.latitude / 1e6).toString + " long " + 
           (shop.longitude / 1e6).toString
@@ -58,13 +62,15 @@ object ProxAlertManagement
                                   buildPendingIntent( list, shop ))
   }
 
+  def deleteProxAlert( shop: Shop ): Unit =
+    deleteProxAlert( shop, shop.shoppingList.fetchOnThisThread )
+
+  def deleteProxAlert( shop: Shop, list: ShoppingList ): Unit =
+    locManager.removeProximityAlert( buildPendingIntent( list, shop ))
+
   def buildPendingIntent( list: ShoppingList, shop: Shop ) = {
-
     val intent = new Intent( ctx, classOf[ ProxAlertManagement ] )
-
-    ShoppingList.intoIntent( list, intent )
     intent.putExtra( shopIdKey, shop.id )
-
     PendingIntent.getBroadcast( ctx, 0, intent,
                                 PendingIntent.FLAG_CANCEL_CURRENT )
   }
@@ -85,23 +91,24 @@ class ProxAlertManagement
       val notificationMgr = c.getSystemService( Context.NOTIFICATION_SERVICE )
         .asInstanceOf[ NotificationManager ]
 
-      val list = ShoppingList.fromIntent( i )
+      val listId = i.getLongExtra( ProxAlertManagement.listIdKey, -1 )
+      val list   = ShoppingLists.findOnThisThread( listId )
 
       if (!i.getBooleanExtra( LocationManager.KEY_PROXIMITY_ENTERING, false )) {
         // Leaving the area...
         Log.d( "XXX", "leaving " + list.name)
-        notificationMgr.cancel( list.id.toInt )
+        notificationMgr.cancel( listId.toInt )
       }
       else {
         // Entering...
-
         Log.d( "XXX", "entering " + list.name )
+
         val n = new Notification( R.drawable.weather_clear, 
                                   "Near a " + list.name + "; go shop!",
                                   System.currentTimeMillis )
 
         val viewIntent = new Intent( c, classOf[ ShoppingListActivity ])
-        ShoppingList.intoIntent( list, viewIntent )
+        viewIntent.putExtra( "shopping_list_id", list.id )
 
         n.setLatestEventInfo( c, "Time to go shopping",
                               "You're near a " + list.name + 
