@@ -76,6 +76,7 @@ object ProxAlertManagement
   def buildPendingIntent( list: ShoppingList, shop: Shop ) = {
     val intent = new Intent( ctx, classOf[ ProxAlertManagement ] )
     intent.putExtra( shopIdKey, shop.id )
+    intent.putExtra( listIdKey, shop.shoppingListId )
     PendingIntent.getBroadcast( ctx, 0, intent,
                                 PendingIntent.FLAG_CANCEL_CURRENT )
   }
