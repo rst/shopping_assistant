@@ -65,8 +65,13 @@ object ProxAlertManagement
   def deleteProxAlert( shop: Shop ): Unit =
     deleteProxAlert( shop, shop.shoppingList.fetchOnThisThread )
 
-  def deleteProxAlert( shop: Shop, list: ShoppingList ): Unit =
+  def deleteProxAlert( shop: Shop, list: ShoppingList ): Unit = {
+    Log.d( "XXX", "removing prox alert for shop " + shop.id + " at lat " +
+          (shop.latitude / 1e6).toString + " long " + 
+          (shop.longitude / 1e6).toString
+          )
     locManager.removeProximityAlert( buildPendingIntent( list, shop ))
+  }
 
   def buildPendingIntent( list: ShoppingList, shop: Shop ) = {
     val intent = new Intent( ctx, classOf[ ProxAlertManagement ] )
