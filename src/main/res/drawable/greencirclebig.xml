@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-  <size android:width="20sp" android:height="20sp"/>
-  <solid android:color="#22FF22"/>
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item>
+   <shape android:shape="oval">
+     <size android:width="20dp" android:height="20dp"/>
+     <solid android:color="#000000"/>
+   </shape>
+  </item>
+  <item>
+   <inset android:insetTop="2dp"
+          android:insetLeft="2dp"
+          android:insetBottom="2dp"
+          android:insetRight="2dp">
+     <shape android:shape="oval">
+       <size android:width="16dp" android:height="16dp"/>
+       <solid android:color="#22FF22"/>
+     </shape>
+   </inset>
+  </item>
+</layer-list>
 
