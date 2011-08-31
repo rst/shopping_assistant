@@ -66,8 +66,8 @@ case class ShoppingList( name:    String = null,
   lazy val items = new HasMany( ShopItems ) with SoftDeleteQueries[ ShopItem ] 
   lazy val shops = new HasMany( Shops )
 
-  lazy val doneItems   = items.whereEq( "is_done" -> false )
-  lazy val undoneItems = items.whereEq( "is_done" -> true  )
+  lazy val doneItems   = items.whereEq( "is_done" -> true  )
+  lazy val undoneItems = items.whereEq( "is_done" -> false )
 }
 
 object ShoppingLists extends RecordManager[ ShoppingList ]( 
@@ -116,10 +116,15 @@ case class Shop( shoppingListId: Long = ManagedRecord.unsavedId,
 object Shops extends RecordManager[ Shop ]( ShoppingDb( "shops" ))
   with ParentSoftDeleteListener[ ShoppingList ]
 {
-  override def save( shop: Shop, scope: Scope[Shop] ) = {
-    // XXX need the ID!
-    super.save( shop, scope )
-    ProxAlertManagement.resetProxAlert( shop )
+  override def save( shop: Shop, scope: Scope[Shop] ): Long = {
+
+    // Need a little kludgery here to give the ProxAlertManagement
+    // code a shop with an ID even on inserts, where the one we
+    // get as an argument doesn't have one yet.
+
+    val shopWithId = shop.copy( id = super.save( shop, scope ) )
+    ProxAlertManagement.resetProxAlert( shopWithId )
+    return shopWithId.id
   }
 
   override def deleteAll( qry: ContentQuery[_,_], scope: Scope[Shop] ) = {
