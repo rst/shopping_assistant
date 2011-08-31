@@ -89,20 +89,21 @@ class ShoppingMapActivity
   }
 
   def setOverlaysForViews = {
+
     mapView.getOverlays.clear
-    for (i <- Range( 0, listsAdapter.getCount )) {
-      val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
 
-      list.undoneItems.count ! Fetch{ numUndone => {
+    ShoppingLists ! Fetch { lists => 
+      for (list <- lists) {
+        list.undoneItems.count ! Fetch{ numUndone => {
+          val icon = if (numUndone > 0) icons( list.iconIdx ).large
+                     else icons( list.iconIdx ).small
 
-        val icon = if (numUndone > 0) icons( list.iconIdx ).large
-                   else icons( list.iconIdx ).small
-
-        if (!editingMode) {             // paranoia about race conditions
-          mapView.getOverlays.add( 
-            new ShopPresentationOverlay( mapView, list, icon ))
-        }
-      }}
+          if (!editingMode) {             // paranoia about race conditions
+            mapView.getOverlays.add( 
+              new ShopPresentationOverlay( mapView, list, icon ))
+          }
+        }}
+      }
     }
   }
 
@@ -244,18 +245,16 @@ class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable )
   extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
   val defaultDescription = "A " + list.name
+  var shops:  IndexedSeq[Shop] = IndexedSeq.empty
 
-  var items:  IndexedSeq[OverlayItem] = IndexedSeq.empty
-
-  def size = items.size
-  def createItem( i: Int ):OverlayItem = items( i )
+  def size = shops.size
+  def createItem( i: Int ):OverlayItem = 
+    new OverlayItem( new GeoPoint( shops(i).latitude, shops(i).longitude ),
+                     defaultDescription, null )
 
   list.shops ! Fetch{ shops =>
-    items = shops.map{ shop =>
-      new OverlayItem( new GeoPoint( shop.latitude, shop.longitude ),
-                       defaultDescription, null ) }
-    setLastFocusedIndex( -1 )           // so we don't die if the list shrank
-    populate
+    this.shops = shops
+    this.populate
     map.invalidate
   }
 }
