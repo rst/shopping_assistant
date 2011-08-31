@@ -63,7 +63,7 @@ case class ShoppingList( name:    String = null,
   def setName( s: String ) = copy( name    = s )
   def setIconIdx( i: Int ) = copy( iconIdx = i )
 
-  lazy val items = new HasMany( ShopItems ) with SoftDeleteQueries[ ShopItem ] 
+  lazy val items = new HasMany( ShopItems ) with SoftDeleteScope[ ShopItem ] 
   lazy val shops = new HasMany( Shops )
 
   lazy val doneItems   = items.whereEq( "is_done" -> true  )
