@@ -19,12 +19,10 @@ import org.positronicnet.orm.Actions._
 
 import android.os.Bundle
 import android.graphics.drawable.Drawable
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.view.View
 import android.view.Menu
-import android.widget.Toast
 import android.widget.ImageView
 import android.widget.SpinnerAdapter
 import android.util.Log
@@ -205,29 +203,6 @@ class ShoppingMapActivity
   // Tell Google we're not using routes.
 
   def isRouteDisplayed = false
-}
-
-// Various widgetry to deal with our available icons, and their display.
-
-object ShoppingIcons {
-
-  case class IconSet( smallResId: Int, largeResId: Int )
-
-  val iconResIds =
-    IndexedSeq( IconSet( R.drawable.bluecircle,  R.drawable.bluecirclebig  ),
-                IconSet( R.drawable.redcircle,   R.drawable.redcirclebig   ),
-                IconSet( R.drawable.greencircle, R.drawable.greencirclebig ))
-
-  val numIcons = iconResIds.size
-
-  def smallResId( list: ShoppingList ) = iconResIds( list.iconIdx ).smallResId
-  def largeResId( list: ShoppingList ) = iconResIds( list.iconIdx ).largeResId
-
-  def small( list: ShoppingList, ctx: Context ) = 
-    ctx.getResources.getDrawable( iconResIds( list.iconIdx ).smallResId )
-
-  def large( list: ShoppingList, ctx: Context ) = 
-    ctx.getResources.getDrawable( iconResIds( list.iconIdx ).largeResId )
 }
 
 class ListIconChoiceAdapter( activity: ShoppingMapActivity )
