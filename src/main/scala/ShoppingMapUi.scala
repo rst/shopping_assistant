@@ -46,8 +46,6 @@ class ShoppingMapActivity
   lazy val listChooser = findView( TR.list_chooser )
   lazy val listsAdapter = new ShoppingListsAdapter( this )
 
-  lazy val icons = ShoppingMaps.icons( this )
-
   // Basic UI wiring.
 
   onCreate { 
@@ -95,8 +93,8 @@ class ShoppingMapActivity
     ShoppingLists ! Fetch { lists => 
       for (list <- lists) {
         list.undoneItems.count ! Fetch{ numUndone => {
-          val icon = if (numUndone > 0) icons( list.iconIdx ).large
-                     else icons( list.iconIdx ).small
+          val icon = if (numUndone > 0) ShoppingIcons.large( list, this )
+                     else ShoppingIcons.small( list, this )
 
           if (!editingMode) {             // paranoia about race conditions
             mapView.getOverlays.add( 
@@ -168,12 +166,13 @@ class ShoppingMapActivity
       val list = listsAdapter.getItem( i ).asInstanceOf[ ShoppingList ]
       if (list.id != listToEdit.id) 
         mapView.getOverlays.add( 
-          new EditShopsBgOverlay( mapView, list, icons( list.iconIdx ).small ))
+          new EditShopsBgOverlay( mapView, list, 
+                                  ShoppingIcons.small( list, this )))
     }
 
     editOverlay = 
       new EditShopsOverlay( mapView, listToEdit, 
-                            icons( listToEdit.iconIdx ).large )
+                            ShoppingIcons.large( listToEdit, this ))
 
     mapView.getOverlays.add( editOverlay )
   }
@@ -208,36 +207,43 @@ class ShoppingMapActivity
 
 // Various widgetry to deal with our available icons, and their display.
 
-object ShoppingMaps {
+object ShoppingIcons {
 
-  case class IconSet( small: Drawable, large: Drawable )
+  case class IconSet( smallResId: Int, largeResId: Int )
 
-  val numIcons = 3 
+  val iconResIds =
+    IndexedSeq( IconSet( R.drawable.bluecircle,  R.drawable.bluecirclebig  ),
+                IconSet( R.drawable.redcircle,   R.drawable.redcirclebig   ),
+                IconSet( R.drawable.greencircle, R.drawable.greencirclebig ))
 
-  def icons( ctx: Context ):IndexedSeq[ IconSet ] = {
+  val numIcons = iconResIds.size
 
-    val rsrc = ctx.getResources
-    val drawable = ( id: Int ) => rsrc.getDrawable( id )
+  def smallResId( list: ShoppingList ) = iconResIds( list.iconIdx ).smallResId
+  def largeResId( list: ShoppingList ) = iconResIds( list.iconIdx ).largeResId
 
-    return IndexedSeq( IconSet( drawable( R.drawable.bluecircle ), 
-                                drawable( R.drawable.bluecirclebig )),
-                       IconSet( drawable( R.drawable.redcircle ),  
-                                drawable( R.drawable.redcirclebig )),
-                       IconSet( drawable( R.drawable.greencircle ),
-                                drawable( R.drawable.greencirclebig )))
-  }
+  def small( list: ShoppingList, ctx: Context ) = 
+    ctx.getResources.getDrawable( iconResIds( list.iconIdx ).smallResId )
+
+  def large( list: ShoppingList, ctx: Context ) = 
+    ctx.getResources.getDrawable( iconResIds( list.iconIdx ).largeResId )
 }
 
 class ListIconChoiceAdapter( activity: ShoppingMapActivity )
-  extends IndexedSeqAdapter( ShoppingMaps.icons( activity ),
+  extends IndexedSeqAdapter( ShoppingIcons.iconResIds,
                              itemViewResourceId = R.layout.image_view )
   with SpinnerAdapter
 {
-  override def bindView( view: View, iconSet: ShoppingMaps.IconSet ) =
-    view.asInstanceOf[ ImageView ].setImageDrawable( iconSet.large )
+  override def bindView( view: View, iconSet: ShoppingIcons.IconSet ) = {
+    val drawable = activity.getResources.getDrawable( iconSet.largeResId )
+    view.asInstanceOf[ ImageView ].setImageDrawable( drawable )
+  }
 }
 
-// Map Overlays.  
+// Map Overlays.  (You'll notice a certain duplication between the
+// presentation and edit overlay base classes.  Unfortunately, it's
+// hard to wrap these up in a trait, due to Scala "implementation
+// restrictions" in accessing protected base class members "populate"
+// and "setLastFocusedIndex" from a trait that gets mixed in...)
 
 // Overlay for just viewing a list
 

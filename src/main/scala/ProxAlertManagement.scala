@@ -88,38 +88,38 @@ class ProxAlertManagement
   // We use list ID as key of the notifications --- at most one alert
   // per list.
 
-  override def onReceive( c: Context, i: Intent ) : Unit = {
+  override def onReceive( ctx: Context, intent: Intent ) : Unit = {
 
-    ShoppingDb.openInContext( c )
-    ProxAlertManagement.openInContext( c )
+    ShoppingDb.openInContext( ctx )
+    ProxAlertManagement.openInContext( ctx )
 
     try {
-      val notificationMgr = c.getSystemService( Context.NOTIFICATION_SERVICE )
+      val notificationMgr = ctx.getSystemService( Context.NOTIFICATION_SERVICE )
         .asInstanceOf[ NotificationManager ]
 
-      val listId = i.getLongExtra( ProxAlertManagement.listIdKey, -1 )
-      val list   = ShoppingLists.findOnThisThread( listId )
+      val listId   = intent.getLongExtra( ProxAlertManagement.listIdKey, -1 )
+      val list     = ShoppingLists.findOnThisThread( listId )
+      val entering = 
+        intent.getBooleanExtra( LocationManager.KEY_PROXIMITY_ENTERING, false )
 
-      if (!i.getBooleanExtra( LocationManager.KEY_PROXIMITY_ENTERING, false )) {
-        // Leaving the area...
+      if (!entering) {
         Log.d( "XXX", "leaving " + list.name)
         notificationMgr.cancel( listId.toInt )
       }
       else {
-        // Entering...
         Log.d( "XXX", "entering " + list.name )
 
-        val n = new Notification( R.drawable.weather_clear, 
+        val n = new Notification( ShoppingIcons.smallResId( list ),
                                   "Near a " + list.name + "; go shop!",
                                   System.currentTimeMillis )
 
-        val viewIntent = new Intent( c, classOf[ ShoppingListActivity ])
+        val viewIntent = new Intent( ctx, classOf[ ShoppingListActivity ])
         viewIntent.putExtra( "shopping_list_id", list.id )
 
-        n.setLatestEventInfo( c, "Time to go shopping",
+        n.setLatestEventInfo( ctx, "Time to go shopping",
                               "You're near a " + list.name + 
                               " where you have pending items",
-                              PendingIntent.getActivity( c, 0, viewIntent, 0 ))
+                              PendingIntent.getActivity( ctx, 0, viewIntent, 0))
 
         notificationMgr.notify( list.id.toInt, n )
       }
