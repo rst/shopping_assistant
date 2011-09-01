@@ -187,6 +187,13 @@ class ShoppingListActivity
                                                       theList.items.records ))
     })
 
+    // Resynch prox alerts with current have-done-items state
+    // when user quits.  
+
+    onPause { 
+      if ( theList != null ) ProxAlertManagement.resetProxAlerts( theList ) 
+    }
+
     // Event handlers...
 
     listItemsView.onItemClick {( view, posn, id ) =>

@@ -47,19 +47,27 @@ object ProxAlertManagement
           shop <- list.shops.fetchOnThisThread )
       resetProxAlert( shop, list )
 
+  def resetProxAlerts( list: ShoppingList) : Unit =
+    for ( shop <- list.shops.fetchOnThisThread )
+      resetProxAlert( shop, list )
+
   def resetProxAlert( shop: Shop ): Unit =
     resetProxAlert( shop, shop.shoppingList.fetchOnThisThread )
 
   def resetProxAlert( shop: Shop, list: ShoppingList ): Unit = {
-    Log.d( "XXX", "adding prox alert for shop " + shop.id + " at lat " +
-          (shop.latitude / 1e6).toString + " long " + 
-          (shop.longitude / 1e6).toString
-          )
-    locManager.addProximityAlert( shop.latitude / 1e6,
-                                  shop.longitude / 1e6,
-                                  ProxAlertManagement.alertRadiusMeters,
-                                  -1,
-                                  buildPendingIntent( list, shop ))
+    if (list.undoneItems.count.fetchOnThisThread > 0) {
+      Log.d( "XXX", "adding prox alert for shop " + shop.id + " at lat " +
+            (shop.latitude / 1e6).toString + " long " + 
+            (shop.longitude / 1e6).toString
+           )
+      locManager.addProximityAlert( shop.latitude / 1e6,
+                                    shop.longitude / 1e6,
+                                    ProxAlertManagement.alertRadiusMeters,
+                                    -1,
+                                    buildPendingIntent( list, shop ))
+    } else {
+      deleteProxAlert( shop, list )
+    }
   }
 
   def deleteProxAlert( shop: Shop ): Unit =
