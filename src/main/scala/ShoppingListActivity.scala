@@ -24,7 +24,7 @@ import android.widget.TextView
 
 class ShoppingListActivity 
   extends PositronicActivity( layoutResourceId = R.layout.shopping_one_list ) 
-  with ViewFinder 
+  with ShoppingActivityCommonHelpers    // see UiMisc
 {
   var theList: ShoppingList = null
 
@@ -66,6 +66,7 @@ class ShoppingListActivity
     findView( TR.addButton ).onClick { doAdd }
     newItemText.onKey( KeyEvent.KEYCODE_ENTER ){ doAdd }
 
+    installCommonOptionsMenuActions     // see UiMisc
     onOptionsItemSelected( R.id.delete_where_done ) { deleteWhereDone }
     onOptionsItemSelected( R.id.undelete ) { undelete }
 

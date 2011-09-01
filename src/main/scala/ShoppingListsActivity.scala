@@ -24,7 +24,7 @@ import android.widget.Toast
 
 class ShoppingListsActivity 
   extends PositronicActivity( layoutResourceId = R.layout.all_lists ) 
-  with ViewFinder 
+  with ShoppingActivityCommonHelpers    // see UiMisc
 {
   lazy val listsView = findView( TR.listsView )
   lazy val renameDialog = new EditStringDialog( this )
@@ -47,10 +47,9 @@ class ShoppingListsActivity
     findView( TR.addButton ).onClick { doAdd }
     findView( TR.newListName ).onKey( KeyEvent.KEYCODE_ENTER ){ doAdd }
 
+    installCommonOptionsMenuActions     // see UiMisc
+
     onOptionsItemSelected( R.id.undelete ) { doUndelete }
-    onOptionsItemSelected( R.id.maps ) {
-      startActivity( new Intent( this, classOf[ ShoppingMapActivity ] ))
-    }
 
     registerForContextMenu( listsView )
 

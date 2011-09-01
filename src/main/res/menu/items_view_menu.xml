@@ -1,5 +1,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   android:name="Shopping list item operations">
+  <item android:id="@+id/editlists"
+        android:title="View Shopping Lists"/>
+  <item android:id="@+id/maps"
+        android:title="View Map"/>
   <item android:id="@+id/delete_where_done"
         android:title="Delete completed tasks"/>
   <item android:id="@+id/undelete"

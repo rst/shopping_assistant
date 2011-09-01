@@ -2,8 +2,10 @@ package org.positronicnet.demo.shopping
 
 import org.positronicnet.ui.PositronicDialog
 import org.positronicnet.ui.PositronicActivity
+import org.positronicnet.ui.PositronicActivityHelpers
 
 import android.content.Context
+import android.content.Intent
 import android.view.KeyEvent
 
 // Various widgetry to deal with our available icons, and their display.
@@ -52,11 +54,22 @@ class EditStringDialog( base: PositronicActivity )
   }
 }
 
-// Getting sub-widgets, using the typed resources consed up by the
-// android SBT plugin.  It would be nice to put this in a library,
-// but the sbt-android plugin puts TypedResource itself in the app's
-// main package --- so the library would have to import it from a
-// different package in every app!
+// Common support code for our activities --- shorthand for dealing with
+// the TypedResource stuff, and common menu actions
+
+trait ShoppingActivityCommonHelpers 
+  extends PositronicActivityHelpers
+  with ViewFinder 
+{
+  def installCommonOptionsMenuActions = {
+    onOptionsItemSelected( R.id.maps ) {
+      startActivity( new Intent( this, classOf[ ShoppingMapActivity ] ))
+    }
+    onOptionsItemSelected( R.id.editlists ) {
+      startActivity( new Intent( this, classOf[ ShoppingListsActivity ]) )
+    }
+  }
+}
 
 trait ViewFinder {
   def findView[T]( tr: TypedResource[T] ) = 

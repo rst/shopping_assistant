@@ -37,7 +37,9 @@ import android.util.Log
 // process.
 
 class ShoppingMapActivity
-  extends MapActivity with PositronicActivityHelpers with ViewFinder
+  extends MapActivity 
+  with PositronicActivityHelpers 
+  with ShoppingActivityCommonHelpers    // see UiMisc
 {
   useOptionsMenuResource( R.menu.map_menu )
 
@@ -63,11 +65,10 @@ class ShoppingMapActivity
     colorSpinner.setAdapter( new ListIconChoiceAdapter( this ) )
     colorSpinner.onItemSelected{ (view, posn, id) => iconSelected( posn ) }
 
+    installCommonOptionsMenuActions     // see UiMisc
+
     onOptionsItemSelected( R.id.edit ){ startEdit }
     onOptionsItemSelected( R.id.view ){ startViewing }
-    onOptionsItemSelected( R.id.editlists ) {
-      startActivity( new Intent( this, classOf[ ShoppingListsActivity ]) )
-    }
   }
 
   override def onPrepareOptionsMenu( menu: Menu ) = {
