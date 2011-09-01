@@ -4,6 +4,8 @@
         android:title="View Shopping Lists"/>
   <item android:id="@+id/maps"
         android:title="View Map"/>
+  <item android:id="@+id/prefs"
+        android:title="Preferences"/>
   <item android:id="@+id/delete_where_done"
         android:title="Delete completed tasks"/>
   <item android:id="@+id/undelete"

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+  <CheckBoxPreference android:key="enabled" 
+                      android:title="Alert near shops" 
+                      android:defaultValue="true" />
+  <EditTextPreference android:key="radius"
+                      android:title="How near (meters)"
+                      android:numeric="integer" />
+</PreferenceScreen>

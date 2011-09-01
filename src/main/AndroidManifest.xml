@@ -13,6 +13,7 @@
         </activity>
         <activity android:label="One Shopping List" android:name=".ShoppingListActivity"/>
         <activity android:label="@string/show_map" android:name=".ShoppingMapActivity"/>
+        <activity android:label="Preferences" android:name=".PrefsActivity"/>
         <receiver android:name="ProxAlertManagement" />
         <uses-library android:name="com.google.android.maps"/>
     </application>

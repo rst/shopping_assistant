@@ -6,4 +6,6 @@
         android:title="Edit Shop Locations"/>
   <item android:id="@+id/view"
         android:title="End Location Edit"/>
+  <item android:id="@+id/prefs"
+        android:title="Preferences"/>
 </menu>

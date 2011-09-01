@@ -2,6 +2,8 @@
   android:name="Shopping list item operations">
   <item android:id="@+id/maps"
         android:title="View Map"/>
+  <item android:id="@+id/prefs"
+        android:title="Preferences"/>
   <item android:id="@+id/undelete"
         android:title="Undelete"/>
 </menu>

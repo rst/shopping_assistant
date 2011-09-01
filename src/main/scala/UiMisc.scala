@@ -68,6 +68,9 @@ trait ShoppingActivityCommonHelpers
     onOptionsItemSelected( R.id.editlists ) {
       startActivity( new Intent( this, classOf[ ShoppingListsActivity ]) )
     }
+    onOptionsItemSelected( R.id.prefs ) {
+      startActivity( new Intent( this, classOf[ PrefsActivity ] ))
+    }
   }
 }
 

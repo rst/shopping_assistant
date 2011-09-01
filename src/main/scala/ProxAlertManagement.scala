@@ -4,6 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 
+import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import android.preference.PreferenceManager
+
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -18,24 +22,47 @@ import android.util.Log
 
 object ProxAlertManagement 
   extends org.positronicnet.util.AppFacility
+  with OnSharedPreferenceChangeListener
 {
   val shopIdKey = "shop_id"
   val listIdKey = "list_id"
 
-  val alertRadiusMeters = 300           // Should be a pref...
+  val alertDefaultRadiusMeters = 100
+  var alertRadiusMeters        = alertDefaultRadiusMeters
 
-  private var locManager: LocationManager = null
-  private var ctx:        Context         = null
+  private var locManager: LocationManager   = null
+  private var ctx:        Context           = null
+  private var prefs:      SharedPreferences = null
 
   override def realOpen( ctx: Context ) = {
     this.ctx = ctx.getApplicationContext
     locManager = ctx.getSystemService( Context.LOCATION_SERVICE )
       .asInstanceOf[ LocationManager ]
+
+    prefs = PreferenceManager.getDefaultSharedPreferences( ctx )
+    prefs.registerOnSharedPreferenceChangeListener( this )
+    setPrefs( prefs )
   }
 
   override def realClose = {
+
+    prefs.unregisterOnSharedPreferenceChangeListener( this )
+
     this.ctx = null
     this.locManager = null
+    this.prefs = null
+  }
+
+  def setPrefs( prefs: SharedPreferences ) = {
+    this.prefs = prefs
+    this.alertRadiusMeters = 
+      Integer.parseInt( prefs.getString( "radius",
+                                         alertDefaultRadiusMeters.toString ))
+  }
+
+  def onSharedPreferenceChanged( prefs: SharedPreferences, name: String ) = {
+    setPrefs( prefs )
+    resetAllProxAlerts
   }
 
   // NB we set a prox alert for each shop, sticking the shop ID in the
@@ -55,14 +82,15 @@ object ProxAlertManagement
     resetProxAlert( shop, shop.shoppingList.fetchOnThisThread )
 
   def resetProxAlert( shop: Shop, list: ShoppingList ): Unit = {
-    if (list.undoneItems.count.fetchOnThisThread > 0) {
+    if (prefs.getBoolean("enabled", false) &&
+        list.undoneItems.count.fetchOnThisThread > 0) 
+    {
       Log.d( "XXX", "adding prox alert for shop " + shop.id + " at lat " +
             (shop.latitude / 1e6).toString + " long " + 
-            (shop.longitude / 1e6).toString
-           )
+            (shop.longitude / 1e6).toString + " radius " + alertRadiusMeters )
       locManager.addProximityAlert( shop.latitude / 1e6,
                                     shop.longitude / 1e6,
-                                    ProxAlertManagement.alertRadiusMeters,
+                                    alertRadiusMeters,
                                     -1,
                                     buildPendingIntent( list, shop ))
     } else {
