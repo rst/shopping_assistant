@@ -13,7 +13,7 @@ class Parent(info: ProjectInfo) extends ParentProject(info) {
   class SampleProject(info: ProjectInfo) extends AndroidProject(info) with Defaults with MarketPublish with TypedResources {
 
     val keyalias  = "change-me"
-    val positroniclib = "org.positronicnet" %% "positronicnetlib" % "0.3"
+    val positroniclib = "org.positronicnet" %% "positronicnetlib" % "0.3-SNAPSHOT"
 
     // We want to keep the source for the "mapviewballoons" android
     // library project separate from those for the app proper.

@@ -7,11 +7,13 @@ import org.positronicnet.ui.PositronicActivityHelpers
 import org.positronicnet.ui.IndexedSeqSourceAdapter
 
 import org.positronicnet.content.PositronicCursor
-import org.positronicnet.util.Notifier
 
-import org.positronicnet.util._
 import org.positronicnet.orm._
 import org.positronicnet.orm.Actions._
+import org.positronicnet.orm.SoftDeleteActions._
+
+import org.positronicnet.notifications._
+import org.positronicnet.notifications.Actions._
 
 import android.app.Activity
 import android.os.Bundle
@@ -117,7 +119,7 @@ class ShoppingListsActivity
   def doUndelete = { 
     ShoppingLists.hasDeleted ! Fetch{ hasDeleted => {
       if ( hasDeleted ) 
-        ShoppingLists ! Undelete( ShoppingList() )
+        ShoppingLists ! Undelete
       else 
         toast( R.string.undeletes_exhausted )
     }}
@@ -245,7 +247,7 @@ class ShoppingListActivity
   def undelete = {
     theList.items.hasDeleted ! Fetch{ hasDeleted => {
       if ( hasDeleted )
-        theList.items ! Undelete( ShopItem() )
+        theList.items ! Undelete
       else
         toast( R.string.undeletes_exhausted )
     }}

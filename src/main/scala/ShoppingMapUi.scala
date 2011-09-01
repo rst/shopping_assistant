@@ -11,7 +11,9 @@ import org.positronicnet.maps.PositronicBalloonItemizedOverlay
 import org.positronicnet.ui.PositronicActivityHelpers
 import org.positronicnet.ui.IndexedSeqAdapter
 
-import org.positronicnet.util._
+import org.positronicnet.notifications._
+import org.positronicnet.notifications.Actions._
+
 import org.positronicnet.orm._
 import org.positronicnet.orm.Actions._
 
@@ -292,9 +294,9 @@ class EditShopsOverlay( map: MapView, list: ShoppingList, d: Drawable )
   extends EditShopsBgOverlay( map, list, d )
   with DoubleTapDetection[ OverlayItem ]
 {
-  list.shops ! AddWatcher( this, resetOverlay( _ ) )
+  list.shops ! AddWatcher( this ){ resetOverlay( _ ) }
 
-  def stopEdit = list.shops ! StopWatching( this )
+  def stopEdit = list.shops ! StopWatcher( this )
 
   onDoubleTap{ idx => list.shops ! Delete( shops( idx ) ) }
 }
