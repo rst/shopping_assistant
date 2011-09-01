@@ -96,10 +96,8 @@ class ShoppingListsActivity
   }
 
   def viewListAt( posn: Int ) {
-    val intent = new Intent( this, classOf[ ShoppingListActivity ] )
     val theList = listsView.getAdapter.getItem(posn).asInstanceOf[ShoppingList]
-    intent.putExtra( "shopping_list_id", theList.id )
-    startActivity( intent )
+    startActivity( ShoppingListActivity.intentToView( theList, this ))
   }
 }
 

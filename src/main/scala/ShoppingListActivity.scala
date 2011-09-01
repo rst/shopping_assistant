@@ -22,6 +22,14 @@ import android.widget.TextView
 
 // The activity which manages an individual shopping list's items.
 
+object ShoppingListActivity {
+  def intentToView( list: ShoppingList, ctx: Context ): Intent = {
+    val intent = new Intent( ctx, classOf[ ShoppingListActivity ] )
+    intent.putExtra( "shopping_list_id", list.id )
+    return intent
+  }
+}
+
 class ShoppingListActivity 
   extends PositronicActivity( layoutResourceId = R.layout.shopping_one_list ) 
   with ShoppingActivityCommonHelpers    // see UiMisc

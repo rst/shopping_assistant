@@ -228,13 +228,19 @@ class ListIconChoiceAdapter( activity: ShoppingMapActivity )
 class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable ) 
   extends PositronicBalloonItemizedOverlay[OverlayItem](map, d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
-  val defaultDescription = "A " + list.name
+  val defaultDescription = "Shop from '" + list.name + "' list"
   var shops:  IndexedSeq[Shop] = IndexedSeq.empty
 
   def size = shops.size
   def createItem( i: Int ):OverlayItem = 
     new OverlayItem( new GeoPoint( shops(i).latitude, shops(i).longitude ),
                      defaultDescription, null )
+
+  override def onBalloonTap( index: Int, item: OverlayItem ): Boolean = {
+    val ctx = map.getContext
+    ctx.startActivity( ShoppingListActivity.intentToView( list, ctx ))
+    return true
+  }
 
   list.shops ! Fetch{ shops =>
     this.shops = shops
@@ -248,7 +254,7 @@ class ShopPresentationOverlay( map: MapView, list: ShoppingList, d: Drawable )
 class EditShopsBgOverlay( map: MapView, list: ShoppingList, d: Drawable )
   extends PositronicItemizedOverlay[OverlayItem](d, PositronicItemizedOverlay.MARKER_CENTERED)
 {
-  val defaultDescription = "A " + list.name
+  val defaultDescription = "Shop from '" + list.name + "' list"
   var shops: IndexedSeq[Shop] = IndexedSeq.empty
 
   def size = shops.size
