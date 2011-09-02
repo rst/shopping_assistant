@@ -52,12 +52,12 @@ class ShoppingListActivity
 
     val listId = getIntent.getLongExtra( "shopping_list_id", -1 )
 
-    ShoppingLists ! Find( listId, list => {
+    ShoppingLists ! Find( listId ){ list => {
       theList = list
       setTitle( "Todo for: " + theList.name )
       listItemsView.setAdapter( new ShopItemsAdapter( this, 
                                                       theList.items.records ))
-    })
+    }}
 
     // Resynch prox alerts with current have-done-items state
     // when user quits.  
