@@ -9,8 +9,12 @@ Then, get a copy of [Positronic Net itself](https://github.com/rst/positronic_ne
     $ cd [your workspace]
     $ git clone https://github.com/rst/positronic_net.git
     $ cd positronic_net
+    $ git checkout -b reflective_orm origin/reflective_orm
     $ sbt update
     $ sbt "project PositronicNetLib" publish-local
+
+NB that this README is for the reflective_orm branch of the app, and requires
+the reflective_orm branch of the library.  
 
 (This does just publish a jar file, containing the classes, and nothing but
 the classes --- no resources.  Fortunately, the library doesn't declare any
