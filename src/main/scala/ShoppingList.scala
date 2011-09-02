@@ -5,14 +5,11 @@ import org.positronicnet.content.ContentQuery
 import org.positronicnet.orm._
 import org.positronicnet.orm.Actions._
 
-import org.positronicnet.util.WorkerThread
-
 // Our domain model classes, such as they are:  Shops, Shopping Lists, etc.
 // Start by defining the DB schema...
 
 object ShoppingDb 
   extends Database( filename = "shopping.sqlite3", logTag = "shopping" ) 
-  with WorkerThread
 {
   // This gets fed to a SQLiteOpenHelper, which implements the following
   // default behavior (unless overridden, of course):

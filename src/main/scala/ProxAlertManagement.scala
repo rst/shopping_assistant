@@ -21,7 +21,7 @@ import android.util.Log
 // sending...
 
 object ProxAlertManagement 
-  extends org.positronicnet.util.AppFacility
+  extends org.positronicnet.facility.AppFacility
   with OnSharedPreferenceChangeListener
 {
   val shopIdKey = "shop_id"
