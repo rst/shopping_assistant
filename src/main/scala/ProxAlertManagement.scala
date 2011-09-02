@@ -149,6 +149,8 @@ class ProxAlertManagement
                                   "Near a " + list.name + "; go shop!",
                                   System.currentTimeMillis )
 
+        n.defaults |= Notification.DEFAULT_VIBRATE
+
         val viewIntent = new Intent( ctx, classOf[ ShoppingListActivity ])
         viewIntent.putExtra( "shopping_list_id", list.id )
 
