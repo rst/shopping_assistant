@@ -9,16 +9,22 @@ Then, get a copy of [Positronic Net itself](https://github.com/rst/positronic_ne
     $ cd [your workspace]
     $ git clone https://github.com/rst/positronic_net.git
     $ cd positronic_net
-    $ git checkout -b reflective_orm origin/reflective_orm
     $ sbt update
     $ sbt "project PositronicNetLib" publish-local
-
-NB that this README is for the reflective_orm branch of the app, and requires
-the reflective_orm branch of the library.  
 
 (This does just publish a jar file, containing the classes, and nothing but
 the classes --- no resources.  Fortunately, the library doesn't declare any
 resources, at least not yet, so this actually works.)
+
+You'll also need to get your maps API key into the resources, perhaps by putting
+a file named `apiKey.xml` into `src/main/res/values`, with contents like so:
+
+    <resources>
+        <string name="mapsKey">0xdeadbeef_your_key_goes_here_443543</string>
+    </resources>
+
+except replacing the content of the `mapsKey` tag with your actual key.
+(Which requires you to have a maps API key; see their docs for details.)
 
 Lastly compile and build this app:
 
