@@ -114,7 +114,7 @@ object ProxAlertManagement
     intent.putExtra( shopIdKey, shop.id )
     intent.putExtra( listIdKey, shop.shoppingListId )
     PendingIntent.getBroadcast( ctx, 0, intent,
-                                PendingIntent.FLAG_CANCEL_CURRENT )
+                                PendingIntent.FLAG_UPDATE_CURRENT )
   }
 }
 
