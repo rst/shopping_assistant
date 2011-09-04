@@ -7,4 +7,8 @@
       last deleted list, choose "Undelete" from the Options Menu.</string>
     <string name="show_map">View shops.  Pending items show bigger.</string>
     <string name="edit_map">Edit shops</string>
+    <string name="map_edit_instructions">
+      Double-tap on the map to add a shop for the selected list.
+      Double-tap on an existing shop to remove it.
+    </string>
 </resources>

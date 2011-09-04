@@ -127,6 +127,8 @@ class ShoppingMapActivity
     }
 
     // Double-tap on a shop handled in the overlay itself.
+
+    toast( R.string.map_edit_instructions, 8 );
   }
 
   def endEdit = 
