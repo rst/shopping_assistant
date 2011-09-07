@@ -11,7 +11,6 @@ Then, get a copy of [Positronic Net itself](https://github.com/rst/positronic_ne
     $ cd [your workspace]
     $ git clone https://github.com/rst/positronic_net.git
     $ cd positronic_net
-    $ git checkout -b sbt10 origin/sbt10
     $ sbt "project PositronicNetLib" publish-local
 
 (This does just publish a jar file, containing the classes, and nothing but
