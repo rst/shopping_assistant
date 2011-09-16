@@ -19,16 +19,19 @@ object General {
       libraryDependencies ++= Seq(
         "org.scalatest"     %% "scalatest"        % "1.6.1"        % "test",
         "org.positronicnet" %% "positronicnetlib" % "0.3-SNAPSHOT"
-      ),
-      // Next bit looks awkward here, but this is where it works...
-      unmanagedSourceDirectories in Compile <+= 
-        baseDirectory(_/"mapviewballoons/src/main/java"))
+      ))
 }
 
 object AndroidBuild extends Build {
-  lazy val proj = Project (
+  lazy val mainProj = Project (
     "PositronicShoppingLists",
     file("."),
     settings = General.fullAndroidSettings
+  ) dependsOn( mapViewBalloons )
+
+  lazy val mapViewBalloons = Project (
+    "MapViewBalloons",
+    file("mapviewballoons"),
+    settings= General.fullAndroidSettings
   )
 }
