@@ -55,8 +55,7 @@ class ShoppingListActivity
     ShoppingLists ! Find( listId ){ list => {
       theList = list
       setTitle( "Todo for: " + theList.name )
-      listItemsView.setAdapter( new ShopItemsAdapter( this, 
-                                                      theList.items.records ))
+      listItemsView.setAdapter( new ShopItemsAdapter( this, theList.items ))
     }}
 
     // Resynch prox alerts with current have-done-items state

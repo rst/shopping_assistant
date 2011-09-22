@@ -112,7 +112,7 @@ class ShoppingListsActivity
 
 class ShoppingListsAdapter( activity: PositronicActivityHelpers )
   extends IndexedSeqSourceAdapter( activity, 
-                                   source = ShoppingLists.records,
+                                   source = ShoppingLists,
                                    itemViewResourceId=R.layout.shoppinglist_row)
   with SpinnerAdapter
 {
