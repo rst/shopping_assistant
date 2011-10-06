@@ -2,20 +2,8 @@ Sample app for the Positronic Net library.
 
 The build procedure, using sbt is something like the following:
 
-First, install sbt 0.10.0 per [instructions](https://github.com/harrah/xsbt/wiki/Setup).  
-
-Next, install a current version of the [sbt-android-plugin](https://github.com/jberkel/android-plugin).  (Building and installing a snapshot may be required.) 
-
-Then, get a copy of [Positronic Net itself](https://github.com/rst/positronic_net), and publish to your local ivy repo:
-
-    $ cd [your workspace]
-    $ git clone https://github.com/rst/positronic_net.git
-    $ cd positronic_net
-    $ sbt "project PositronicNetLib" publish-local
-
-(This does just publish a jar file, containing the classes, and nothing but
-the classes --- no resources.  Fortunately, the library doesn't declare any
-resources, at least not yet, so this actually works.)
+First, install the Android SDK, sbt, and the Positronic Net library
+itself following instructions [here](http://rst.github.com/tut_sections/2001/01/01/installation.html).
 
 You'll also need to get your maps API key into the resources, perhaps by putting
 a file named `apiKey.xml` into `src/main/res/values`, with contents like so:
